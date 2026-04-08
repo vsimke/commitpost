@@ -1,0 +1,40 @@
+# Development files
+test-*.js
+.gitignore
+.git/
+.github/
+
+# Documentation
+CONTRIBUTING.md
+DEVELOPING.md
+
+# Build artifacts
+dist/
+build/
+*.log
+
+# Node modules (included in package)
+node_modules/
+
+# Config
+.env*
+.npmrc
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.md
+!README.md
+!LICENSE

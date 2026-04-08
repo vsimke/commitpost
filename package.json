@@ -1,23 +1,41 @@
 {
     "name": "gitpost",
     "version": "0.1.0",
-    "description": "CLI tool to generate LinkedIn posts from git history",
+    "description": "CLI tool to generate LinkedIn posts from git history with AI and cover images",
     "type": "module",
     "main": "src/index.js",
     "bin": {
         "gitpost": "./src/index.js"
     },
     "scripts": {
-        "dev": "node src/index.js"
+        "dev": "node src/index.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "keywords": [
         "git",
         "linkedin",
         "cli",
-        "content-generation"
+        "content-generation",
+        "ai",
+        "claude",
+        "anthropic",
+        "developer-tools",
+        "social-media",
+        "automation"
     ],
-    "author": "",
+    "author": "Vladimir",
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/USERNAME/gitpost.git"
+    },
+    "bugs": {
+        "url": "https://github.com/USERNAME/gitpost/issues"
+    },
+    "homepage": "https://github.com/USERNAME/gitpost#readme",
+    "engines": {
+        "node": ">=18.0.0"
+    },
     "dependencies": {
         "commander": "^12.0.0",
         "simple-git": "^3.24.0",
