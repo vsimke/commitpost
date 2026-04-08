@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { getCommits, getDiffStats, formatCommitSummary } from './git.js';
 import { generatePost, generateHeadline } from './ai.js';
 import { loadConfig, saveConfig, updateConfig, displayConfig, hasToneProfile } from './config.js';
+import { generateCoverImage, formatHeadlineForImage } from './image.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -51,6 +52,39 @@ program
       console.log('---');
       console.log(post);
       console.log('---\n');
+
+      // Generate image if requested
+      if (options.includeImage) {
+        try {
+          console.log('🎨 Generating cover image...');
+          
+          // Try to generate headline, fallback to first commit message if AI fails
+          let headline = commits[0]?.message || 'What I shipped this week';
+          try {
+            const aiHeadline = await generateHeadline(commits);
+            headline = aiHeadline;
+          } catch (headlineError) {
+            console.log('  (Using commit message as headline)\n');
+          }
+          
+          const formattedHeadline = formatHeadlineForImage(headline);
+          
+          // Get author name from commits or use default
+          const author = commits[0]?.author || 'Developer';
+          
+          // Generate image
+          const imagePath = await generateCoverImage({
+            headline: formattedHeadline,
+            author: author,
+            outputPath: './gitpost-cover.png',
+            projectPath: process.cwd(),
+          });
+
+          console.log(`✅ Cover image saved: ${imagePath}\n`);
+        } catch (imageError) {
+          console.warn(`⚠️  Could not generate image: ${imageError.message}\n`);
+        }
+      }
 
       console.log('✅ Post ready! Copy the text above to LinkedIn.');
       // TODO: Save to file or clipboard
