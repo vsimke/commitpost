@@ -5,6 +5,8 @@ import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { getCommits, getDiffStats, formatCommitSummary } from './git.js';
+import { generatePost, generateHeadline } from './ai.js';
+import { loadConfig, saveConfig, updateConfig, displayConfig, hasToneProfile } from './config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -41,19 +43,17 @@ program
         process.exit(1);
       }
 
-      // Get diff stats if requested
-      if (options.includeImage) {
-        const stats = await getDiffStats({
-          author: options.author,
-          days: parseInt(options.since, 10),
-        });
-        if (stats) {
-          console.log('📈 Changes:\n', stats);
-        }
-      }
+      // Generate post
+      console.log('✨ Generating post with AI...\n');
+      const post = await generatePost(commits);
+      
+      console.log('📝 Generated Post:\n');
+      console.log('---');
+      console.log(post);
+      console.log('---\n');
 
-      console.log('✅ Ready for Phase 3 — AI post generation');
-      // TODO: Implement AI post generation
+      console.log('✅ Post ready! Copy the text above to LinkedIn.');
+      // TODO: Save to file or clipboard
     } catch (error) {
       console.error('❌ Error:', error.message);
       process.exit(1);
@@ -64,18 +64,61 @@ program
   .command('setup')
   .description('Set up tone profile from writing sample')
   .action(async () => {
-    console.log('📝 Setting up tone profile...');
-    // TODO: Implement tone profile setup
+    try {
+      console.log('📝 Setting up GitPost...\n');
+      
+      // Check for API key
+      const existingApiKey = process.env.ANTHROPIC_API_KEY;
+      if (!existingApiKey) {
+        console.log('⚠️  No ANTHROPIC_API_KEY environment variable found.');
+        console.log('Set it with: export ANTHROPIC_API_KEY=sk-ant-...\n');
+      } else {
+        console.log('✅ ANTHROPIC_API_KEY is set\n');
+      }
+
+      // For now, show instructions for manual setup
+      console.log('To set up your tone profile:');
+      console.log('1. Write or paste a sample of your writing (a previous LinkedIn post, blog post, etc.)');
+      console.log('2. Save it to a file');
+      console.log('3. Run: gitpost setup <file-path>\n');
+      
+      // TODO: Implement interactive tone profile capture
+      console.log('📋 Current config:');
+      console.log(displayConfig());
+    } catch (error) {
+      console.error('❌ Error:', error.message);
+      process.exit(1);
+    }
   });
 
 program
   .command('config')
   .description('Manage GitPost configuration')
   .option('--view', 'View current config', false)
+  .option('--set-tone <file>', 'Set tone profile from a file')
+  .option('--set-key <key>', 'Set Anthropic API key')
   .action((options) => {
-    if (options.view) {
-      console.log('📋 Current configuration:');
-      // TODO: Show config
+    try {
+      if (options.setTone) {
+        // Set tone profile from file
+        const content = readFileSync(options.setTone, 'utf8');
+        updateConfig('toneProfile', content);
+        console.log('✅ Tone profile updated from', options.setTone);
+        console.log('');
+      }
+
+      if (options.setKey) {
+        // Set API key
+        updateConfig('apiKey', options.setKey);
+        console.log('✅ API key saved to config');
+        console.log('');
+      }
+
+      // Always show config at the end
+      console.log(displayConfig());
+    } catch (error) {
+      console.error('❌ Error:', error.message);
+      process.exit(1);
     }
   });
 

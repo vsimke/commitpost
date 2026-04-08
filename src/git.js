@@ -17,13 +17,7 @@ export async function getCommits({ author = '', days = 7, cwd = process.cwd() })
   sinceDate.setDate(sinceDate.getDate() - days);
   const sinceDateStr = sinceDate.toISOString().split('T')[0];
 
-  // Format for git log
-  const logFormat = '%H|%an|%ae|%ad|%s|%b';
-  const logOptions = [
-    `--since=${sinceDateStr}`,
-    `--format=${logFormat}`,
-    '--abbrev-commit',
-  ];
+  const logOptions = [`--since=${sinceDateStr}`, '-n', '100'];
 
   // Add author filter if provided
   if (author && author.trim()) {
