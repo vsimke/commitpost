@@ -7,3 +7,5 @@ npm-debug.log*
 dist/
 build/
 .gitpost/
+test-*.png
+test-*.svg
