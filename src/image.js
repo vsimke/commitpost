@@ -1,12 +1,45 @@
-import sharp from 'sharp';
-import { readdirSync, readFileSync } from 'fs';
+import { readFileSync, readdirSync, writeFileSync } from 'fs';
 import { execSync } from 'child_process';
 import { join, extname } from 'path';
 import { getImageStyle } from './image-styles.js';
+import satori from 'satori';
+import { Resvg } from '@resvg/resvg-js';
+import hljs from 'highlight.js';
+import sharp from 'sharp';
 
 // LinkedIn optimal cover image size
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 627;
+
+/**
+ * Find a meaningful start line in code — class/function definition rather than imports/header
+ */
+function findMeaningfulStartLine(lines, ext) {
+  const patterns = {
+    '.php': /^(class|interface|trait|abstract\s+class)\s/,
+    '.js':  /^(export\s+)?(async\s+)?function\s+\w|^(export\s+)?(default\s+)?class\s+\w/,
+    '.ts':  /^(export\s+)?(async\s+)?function\s+\w|^(export\s+)?(default\s+)?(abstract\s+)?class\s+\w|^(export\s+)?interface\s+\w/,
+    '.jsx': /^(export\s+)?(async\s+)?function\s+\w|^(export\s+)?(default\s+)?class\s+\w/,
+    '.tsx': /^(export\s+)?(async\s+)?function\s+\w|^(export\s+)?(default\s+)?(abstract\s+)?class\s+\w|^(export\s+)?interface\s+\w/,
+    '.py':  /^(class|def)\s/,
+    '.java':/^(public|private|protected)?\s*(class|interface|enum|record)\s/,
+    '.cs':  /^(public|private|protected|internal)?\s*(class|interface|struct|enum|record)\s/,
+    '.rb':  /^(class|def|module)\s/,
+    '.go':  /^func\s/,
+    '.rs':  /^(pub\s+)?(fn|struct|impl|enum|trait)\s/,
+  };
+
+  const pattern = patterns[ext];
+  if (!pattern) return 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (pattern.test(lines[i])) {
+      return Math.max(0, i - 1);
+    }
+  }
+
+  return 0;
+}
 
 /**
  * Extract code from files changed in commit
@@ -63,8 +96,9 @@ function extractCodeFromChangedFiles(commits) {
     );
 
     if (content && content.length > 0) {
-      // Return first 12 lines (more space for code now)
-      return content.split('\n').slice(0, 12).join('\n');
+      const lines = content.split('\n');
+      const start = findMeaningfulStartLine(lines, extname(randomFile));
+      return lines.slice(start, start + 20).join('\n');
     }
 
     return '';
@@ -79,149 +113,371 @@ function extractCodeFromChangedFiles(commits) {
  * @returns {Object} { filename, content }
  */
 export function pickRandomSourceFile(projectPath) {
-  const srcDir = join(projectPath, 'src');
-  
-  try {
-    const files = readdirSync(srcDir)
-      .filter(f => ['.js', '.ts', '.jsx', '.tsx'].includes(extname(f)))
-      .map(f => join(srcDir, f));
-    
-    if (files.length === 0) {
-      return null;
-    }
+  const CODE_EXTENSIONS = ['.js', '.ts', '.jsx', '.tsx', '.php', '.py', '.rb', '.java', '.go', '.rs', '.cs', '.vue', '.swift', '.kt'];
+  const SEARCH_DIRS = ['src', 'app', 'lib', 'core', 'modules', 'components', 'controllers', 'models', 'services'];
+  const EXCLUDE_DIRS = /node_modules|vendor|\.git|dist|build|storage|cache|__pycache__|\.pytest_cache/;
 
-    const randomFile = files[Math.floor(Math.random() * files.length)];
+  const allFiles = [];
+
+  for (const dir of SEARCH_DIRS) {
+    try {
+      const dirPath = join(projectPath, dir);
+      const walk = (d) => {
+        for (const entry of readdirSync(d, { withFileTypes: true })) {
+          const full = join(d, entry.name);
+          if (entry.isDirectory() && !EXCLUDE_DIRS.test(full)) {
+            walk(full);
+          } else if (entry.isFile() && CODE_EXTENSIONS.includes(extname(entry.name))) {
+            allFiles.push(full);
+          }
+        }
+      };
+      walk(dirPath);
+    } catch {
+      // dir doesn't exist, skip
+    }
+  }
+
+  if (allFiles.length === 0) return null;
+
+  const randomFile = allFiles[Math.floor(Math.random() * allFiles.length)];
+
+  try {
     const content = readFileSync(randomFile, 'utf8');
-    
+    const lines = content.split('\n');
+    const start = findMeaningfulStartLine(lines, extname(randomFile));
     return {
       filename: randomFile.split('/').pop(),
-      content: content.split('\n').slice(0, 8).join('\n'),
+      content: lines.slice(start, start + 30).join('\n'),
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }
 
 /**
- * Wrap text to fit within width
- * @param {string} text - Text to wrap
- * @param {number} maxCharsPerLine - Characters per line
- * @returns {Array} Array of text chunks
+ * Parse highlight.js HTML output into colored token spans for satori
  */
-function wrapText(text, maxCharsPerLine = 40) {
-  const words = text.split(' ');
-  const lines = [];
-  let currentLine = '';
-
-  for (const word of words) {
-    if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
-      currentLine = currentLine ? currentLine + ' ' + word : word;
+function parseHighlightedTokens(html) {
+  const tokens = [];
+  // Split on <span class="hljs-..."> and </span>
+  const parts = html.split(/(<span class="[^"]+">|<\/span>)/);
+  let currentColor = null;
+  const colorMap = {
+    'hljs-keyword': '#c792ea',
+    'hljs-built_in': '#82aaff',
+    'hljs-string': '#c3e88d',
+    'hljs-number': '#f78c6c',
+    'hljs-comment': '#546e7a',
+    'hljs-function': '#82aaff',
+    'hljs-title': '#82aaff',
+    'hljs-params': '#d6deeb',
+    'hljs-attr': '#ffcb6b',
+    'hljs-variable': '#f07178',
+    'hljs-operator': '#89ddff',
+    'hljs-punctuation': '#89ddff',
+    'hljs-property': '#ffcb6b',
+  };
+  const stack = [];
+  for (const part of parts) {
+    if (!part) continue;
+    const openMatch = part.match(/^<span class="([^"]+)">$/);
+    if (openMatch) {
+      const cls = openMatch[1].split(' ')[0];
+      stack.push(colorMap[cls] || null);
+      currentColor = colorMap[cls] || currentColor;
+    } else if (part === '</span>') {
+      stack.pop();
+      currentColor = stack.length > 0 ? stack[stack.length - 1] : null;
     } else {
-      if (currentLine) lines.push(currentLine);
-      currentLine = word;
+      // decode HTML entities
+      const text = part.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&#x27;/g, "'").replace(/&quot;/g, '"');
+      if (text) tokens.push({ text, color: currentColor });
     }
   }
-  if (currentLine) lines.push(currentLine);
-
-  return lines;
+  return tokens;
 }
 
 /**
- * Generate SVG cover image with configurable style
- * @param {string} headline - Headline text
- * @param {string} author - Author name
- * @param {string} codeSnippet - Code snippet for background
- * @param {Object} style - Image style config
- * @returns {string} SVG markup
+ * Inject a Gaussian blur filter into a raw SVG string
  */
-function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
-  // Default light style
-  const defaultStyle = {
+function addBlurToSvg(svgStr, sigma) {
+  const svgOpenEnd = svgStr.indexOf('>') + 1;
+  const before = svgStr.substring(0, svgOpenEnd);
+  const content = svgStr.substring(svgOpenEnd, svgStr.lastIndexOf('</svg>'));
+  return `${before}<defs><filter id="cf"><feGaussianBlur stdDeviation="${sigma}"/></filter></defs><g filter="url(#cf)">${content}</g></svg>`;
+}
+
+/**
+ * Build satori tree for code layer only (no background)
+ */
+function buildCodeTree(codeLineNodes) {
+  return {
+    type: 'div',
+    props: {
+      style: {
+        display: 'flex',
+        width: 1200,
+        height: 627,
+        position: 'relative',
+      },
+      children: [{
+        type: 'div',
+        props: {
+          style: {
+            position: 'absolute',
+            inset: 0,
+            paddingTop: 24,
+            paddingLeft: 40,
+            paddingRight: 40,
+            display: 'flex',
+            flexDirection: 'column',
+            fontFamily: 'monospace',
+            fontSize: 16,
+            lineHeight: 1.5,
+            opacity: 0.95,
+          },
+          children: codeLineNodes,
+        },
+      }],
+    },
+  };
+}
+
+/**
+ * Build satori tree for background layer only (gradient + accent bar)
+ */
+function buildBgTree(s) {
+  return {
+    type: 'div',
+    props: {
+      style: {
+        display: 'flex',
+        width: 1200,
+        height: 627,
+        background: `linear-gradient(135deg, ${s.bgColor1} 0%, ${s.bgColor2} 100%)`,
+        position: 'relative',
+      },
+      children: [
+        { type: 'div', props: { style: { position: 'absolute', left: 0, top: 0, width: 6, height: 627, background: s.accentColor } } },
+      ],
+    },
+  };
+}
+
+/**
+ * Build satori tree for UI layer — full-image overlay + centered headline + author + badge
+ */
+function buildUiTree(headline, author, s) {
+  const isDark = s.textColor === '#f1f5f9' || s.textColor?.startsWith('#f');
+  const overlayBg = isDark ? 'rgba(15,23,42,0.88)' : 'rgba(248,250,252,0.82)';
+
+  return {
+    type: 'div',
+    props: {
+      // The whole div IS the overlay — flex centering works naturally in satori
+      style: {
+        display: 'flex',
+        width: 1200,
+        height: 627,
+        flexDirection: 'column',
+        justifyContent: 'center',
+        background: overlayBg,
+        paddingLeft: 60,
+        paddingRight: 60,
+        position: 'relative',
+      },
+      children: [
+        // Left accent bar
+        {
+          type: 'div',
+          props: { style: { position: 'absolute', left: 0, top: 0, width: 6, height: 627, background: s.accentColor } },
+        },
+        // Headline — centered by parent flex
+        {
+          type: 'div',
+          props: {
+            style: {
+              fontSize: 58, fontWeight: 800,
+              color: s.textColor, lineHeight: 1.2,
+              letterSpacing: '-1px',
+              display: 'flex', flexWrap: 'wrap',
+            },
+            children: headline,
+          },
+        },
+        // Author — absolute bottom left
+        {
+          type: 'div',
+          props: {
+            style: { position: 'absolute', left: 60, bottom: 40, fontSize: 18, color: s.textColor, opacity: 0.75 },
+            children: `— ${author}`,
+          },
+        },
+        // Badge — absolute top right
+        {
+          type: 'div',
+          props: {
+            style: { position: 'absolute', right: 40, top: 24, fontFamily: 'monospace', fontSize: 12, color: s.accentColor, opacity: 0.7 },
+            children: 'by gitpost',
+          },
+        },
+      ],
+    },
+  };
+}
+
+function buildCoverTree(headline, author, codeSnippet, style) {
+  const s = {
     bgColor1: '#f8fafc',
     bgColor2: '#e2e8f0',
-    codeOpacity: 0.6,
-    codeBlur: 0,
     overlayColor: '#ffffff',
-    overlayOpacity: 0.15,
+    overlayOpacity: 0.82,
     textColor: '#0f172a',
     accentColor: '#1e40af',
+    codeBg: '#0d1117',
+    ...style,
   };
 
-  const colors = { ...defaultStyle, ...style };
+  // Syntax-highlight the code with highlight.js
+  const codeLines = codeSnippet.split('\n').slice(0, 28);
+  const highlighted = hljs.highlightAuto(codeLines.join('\n')).value;
+  const tokens = parseHighlightedTokens(highlighted);
 
-  const escapeXml = (str) => {
-    return str
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+  // Split tokens back per line so we can render line by line
+  const lineTokens = [[]];
+  for (const token of tokens) {
+    const parts = token.text.split('\n');
+    parts.forEach((part, i) => {
+      if (i > 0) lineTokens.push([]);
+      if (part) lineTokens[lineTokens.length - 1].push({ text: part, color: token.color });
+    });
+  }
+
+  const codeLineNodes = lineTokens.map((line, i) => ({
+    type: 'div',
+    props: {
+      style: { display: 'flex', flexDirection: 'row', height: 20, overflow: 'hidden' },
+      children: line.length === 0
+        ? [{ type: 'span', props: { style: { color: 'transparent' }, children: ' ' } }]
+        : line.map(tok => ({
+            type: 'span',
+            props: {
+              style: { color: tok.color || '#adbac7', whiteSpace: 'pre' },
+              children: tok.text,
+            },
+          })),
+    },
+  }));
+
+  return {
+    type: 'div',
+    props: {
+      style: {
+        display: 'flex',
+        width: 1200,
+        height: 627,
+        background: `linear-gradient(135deg, ${s.bgColor1} 0%, ${s.bgColor2} 100%)`,
+        position: 'relative',
+        overflow: 'hidden',
+      },
+      children: [
+        // Left accent bar
+        { type: 'div', props: { style: { position: 'absolute', left: 0, top: 0, width: 6, height: 627, background: s.accentColor } } },
+
+        // Code block — full height, dark background
+        {
+          type: 'div',
+          props: {
+            style: {
+              position: 'absolute',
+              inset: 0,
+              paddingTop: 24,
+              paddingLeft: 40,
+              paddingRight: 40,
+              display: 'flex',
+              flexDirection: 'column',
+              fontFamily: 'monospace',
+              fontSize: 16,
+              lineHeight: 1.5,
+              opacity: 0.95,
+            },
+            children: codeLineNodes,
+          },
+        },
+
+        // Frosted overlay behind headline only (skip if opacity=0)
+        ...(s.overlayOpacity > 0 ? [{
+          type: 'div',
+          props: {
+            style: {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: 150,
+              height: 260,
+              background: s.overlayColor && s.overlayColor !== 'none' ? s.overlayColor : '#ffffff',
+              opacity: s.overlayOpacity,
+            },
+          },
+        }] : []),
+
+        // Headline
+        {
+          type: 'div',
+          props: {
+            style: {
+              position: 'absolute',
+              left: 60,
+              right: 60,
+              top: 165,
+              fontSize: 56,
+              fontWeight: 800,
+              color: s.textColor,
+              lineHeight: 1.15,
+              letterSpacing: '-1px',
+              display: 'flex',
+              flexWrap: 'wrap',
+            },
+            children: headline,
+          },
+        },
+
+        // Author
+        {
+          type: 'div',
+          props: {
+            style: {
+              position: 'absolute',
+              left: 60,
+              bottom: 40,
+              fontSize: 18,
+              color: s.textColor,
+              opacity: 0.85,
+            },
+            children: `— ${author}`,
+          },
+        },
+
+        // Badge
+        {
+          type: 'div',
+          props: {
+            style: {
+              position: 'absolute',
+              right: 40,
+              top: 24,
+              fontFamily: 'monospace',
+              fontSize: 12,
+              color: s.accentColor,
+              opacity: 0.6,
+            },
+            children: 'by gitpost',
+          },
+        },
+      ],
+    },
   };
-
-  const headlineText = escapeXml(headline);
-  const authorText = escapeXml(author);
-  // Show more lines of code now (12 instead of 4)
-  const codeLines = codeSnippet.substring(0, 300).split('\n').slice(0, 12);
-
-  // Wrap headline to 2 lines max
-  const headlineLines = wrapText(headlineText, 40);
-
-  let codeLinesXml = '';
-  codeLines.forEach((line, i) => {
-    codeLinesXml += `<tspan x="40" dy="${i === 0 ? '20' : '18'}">${escapeXml(line.substring(0, 120))}</tspan>`;
-  });
-
-  // Overlay only in text area (bottom 200px), not across entire image
-  const overlayRect = colors.overlayOpacity > 0 
-    ? `<rect x="0" y="380" width="${IMAGE_WIDTH}" height="247" fill="${colors.overlayColor}" opacity="${colors.overlayOpacity}" />`
-    : '';
-
-  // Code group - positioned higher with no overlay obscuring it
-  const codeGroup = colors.codeOpacity > 0
-    ? `<g opacity="${colors.codeOpacity}">
-        <text x="40" y="50" font-family="monospace" font-size="14" font-weight="400" fill="${colors.accentColor}">
-          ${codeLinesXml}
-        </text>
-      </g>`
-    : '';
-
-  return `
-    <svg width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:${colors.bgColor1};stop-opacity:1" />
-          <stop offset="100%" style="stop-color:${colors.bgColor2};stop-opacity:1" />
-        </linearGradient>
-      </defs>
-      
-      <!-- Background gradient (full height) -->
-      <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bg)" />
-      
-      <!-- Left accent bar -->
-      <rect x="0" y="0" width="6" height="${IMAGE_HEIGHT}" fill="${colors.accentColor}" />
-      
-      <!-- Code area (top, no overlay) -->
-      ${codeGroup}
-      
-      <!-- Overlay for text readability (bottom area only) -->
-      ${overlayRect}
-      
-      <!-- Headline lines (in overlay area) -->
-      <text x="60" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="700" fill="${colors.textColor}">
-        ${headlineLines.map((line, i) => `<tspan x="60" dy="${i === 0 ? '0' : '55'}">${line}</tspan>`).join('')}
-      </text>
-      
-      <!-- Author attribution (in overlay area) -->
-      <text x="60" y="570" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="${colors.textColor}" opacity="0.9">
-        — ${authorText}
-      </text>
-      
-      <!-- Badge -->
-      <text x="${IMAGE_WIDTH - 180}" y="35" font-family="monospace" font-size="11" fill="${colors.accentColor}" opacity="0.7">
-        by gitpost
-      </text>
-    </svg>
-  `;
 }
 
 /**
@@ -243,56 +499,124 @@ export async function generateCoverImage({
   style = 'light_code',
   commits = [],
 } = {}) {
-  try {
-    // Get style config
-    let styleConfig = {};
-    if (typeof style === 'string') {
-      const styleObj = getImageStyle(style);
-      if (styleObj) {
-        styleConfig = styleObj.config;
-      }
-    } else if (typeof style === 'object') {
-      styleConfig = style;
-    }
-
-    // Get code snippet - prioritize git diff from commits
-    let codeSnippet = '';
-    
-    if (commits && commits.length > 0) {
-      codeSnippet = extractCodeFromChangedFiles(commits);
-    }
-
-    // Fallback to random source file
-    if (!codeSnippet) {
-      const sourceFile = pickRandomSourceFile(projectPath);
-      if (sourceFile) {
-        codeSnippet = sourceFile.content;
-      }
-    }
-
-    // Create SVG
-    const svgString = createCoverSvg(headline, author, codeSnippet, styleConfig);
-
-    // Convert to PNG
-    const buffer = await sharp(Buffer.from(svgString), {
-      density: 150,
-    })
-      .png()
-      .toBuffer();
-
-    // Save
-    await sharp(buffer)
-      .resize(IMAGE_WIDTH, IMAGE_HEIGHT, {
-        fit: 'contain',
-        background: { r: 248, g: 250, b: 252, alpha: 1 },
-      })
-      .png()
-      .toFile(outputPath);
-
-    return outputPath;
-  } catch (error) {
-    throw new Error(`Failed to generate cover image: ${error.message}`);
+  // Get style config
+  let styleConfig = {};
+  if (typeof style === 'string') {
+    const styleObj = getImageStyle(style);
+    if (styleObj) styleConfig = styleObj.config;
+  } else if (typeof style === 'object') {
+    styleConfig = style;
   }
+
+  // Get code snippet
+  let codeSnippet = '';
+  if (commits && commits.length > 0) {
+    codeSnippet = extractCodeFromChangedFiles(commits);
+  }
+  if (!codeSnippet) {
+    const sourceFile = pickRandomSourceFile(projectPath);
+    if (sourceFile) codeSnippet = sourceFile.content;
+  }
+
+  const s = {
+    bgColor1: '#f8fafc', bgColor2: '#e2e8f0',
+    overlayColor: '#ffffff', overlayOpacity: 0.82,
+    textColor: '#0f172a', accentColor: '#1e40af',
+    codeBlur: 20,
+    ...styleConfig,
+  };
+
+  // Load font
+  const interFontPath = new URL('../node_modules/@fontsource/inter/files/inter-latin-700-normal.woff', import.meta.url);
+  let fontData;
+  try {
+    fontData = readFileSync(interFontPath);
+  } catch {
+    fontData = readFileSync('/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf');
+  }
+  const fonts = [
+    { name: 'sans-serif', data: fontData, weight: 800, style: 'normal' },
+    { name: 'monospace', data: fontData, weight: 400, style: 'normal' },
+  ];
+
+  // Build highlighted code line nodes
+  const codeLines = codeSnippet.split('\n').slice(0, 28);
+  const highlighted = hljs.highlightAuto(codeLines.join('\n')).value;
+  const tokens = parseHighlightedTokens(highlighted);
+  const lineTokens = [[]];
+  for (const token of tokens) {
+    const parts = token.text.split('\n');
+    parts.forEach((part, i) => {
+      if (i > 0) lineTokens.push([]);
+      if (part) lineTokens[lineTokens.length - 1].push({ text: part, color: token.color });
+    });
+  }
+  const codeLineNodes = lineTokens.map((line) => ({
+    type: 'div',
+    props: {
+      style: { display: 'flex', flexDirection: 'row', height: 20, overflow: 'hidden' },
+      children: line.length === 0
+        ? [{ type: 'span', props: { style: { color: 'transparent' }, children: ' ' } }]
+        : line.map(tok => ({ type: 'span', props: { style: { color: tok.color || '#adbac7', whiteSpace: 'pre' }, children: tok.text } })),
+    },
+  }));
+
+  // Build satori tree for background + code combined (solid, no transparency)
+  function buildBgCodeTree(codeLineNodes) {
+    return {
+      type: 'div',
+      props: {
+        style: {
+          display: 'flex',
+          width: 1200,
+          height: 627,
+          background: `linear-gradient(135deg, ${s.bgColor1} 0%, ${s.bgColor2} 100%)`,
+          position: 'relative',
+        },
+        children: [
+          { type: 'div', props: { style: { position: 'absolute', left: 0, top: 0, width: 6, height: 627, background: s.accentColor } } },
+          {
+            type: 'div',
+            props: {
+              style: {
+                position: 'absolute',
+                inset: 0,
+                paddingTop: 24,
+                paddingLeft: 40,
+                paddingRight: 40,
+                display: 'flex',
+                flexDirection: 'column',
+                fontFamily: 'monospace',
+                fontSize: 16,
+                lineHeight: 1.5,
+                opacity: 0.9,
+              },
+              children: codeLineNodes,
+            },
+          },
+        ],
+      },
+    };
+  }
+
+  // Pass 1: render bg+code as solid image → blur with sharp
+  const bgCodeSvg = await satori(buildBgCodeTree(codeLineNodes), { width: 1200, height: 627, fonts });
+  const bgCodeRendered = new Resvg(bgCodeSvg).render().asPng();
+  const bgCodePng = s.codeBlur > 0
+    ? await sharp(bgCodeRendered).blur(s.codeBlur).png().toBuffer()
+    : bgCodeRendered;
+
+  // Pass 2: UI layer (overlay + headline + author, transparent bg)
+  const uiSvg = await satori(buildUiTree(headline, author, s), { width: 1200, height: 627, fonts });
+  const uiPng = new Resvg(uiSvg).render().asPng();
+
+  // Composite: blurred(bg+code) → UI on top
+  await sharp(bgCodePng)
+    .composite([{ input: uiPng, blend: 'over' }])
+    .png()
+    .toFile(outputPath);
+
+  return outputPath;
 }
 
 /**

@@ -27,6 +27,7 @@ program
   .option('--author <name>', 'Git author name to filter commits', process.env.GIT_AUTHOR_NAME || '')
   .option('--since <days>', 'Number of days back to look at commits', '7')
   .option('--tone <name>', 'Use a built-in tone profile (run `gitpost list-tones` to see options)')
+  .option('--length <size>', 'Post length: short (~100w), medium (~250w), long (~500w)', 'medium')
   .option('--image-style <name>', 'Cover image style for --include-image (run `gitpost list-image-styles` to see options)', 'light_code')
   .option('--include-image', 'Generate a cover image', false)
   .action(async (options) => {
@@ -63,7 +64,7 @@ program
 
       // Generate post
       console.log('✨ Generating post with AI...\n');
-      const post = await generatePost(commits, { toneProfile });
+      const post = await generatePost(commits, { toneProfile, postLength: options.length });
       
       console.log('📝 Generated Post:\n');
       console.log('---');

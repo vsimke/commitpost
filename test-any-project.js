@@ -11,7 +11,13 @@
 
 import { generateCoverImage } from './src/image.js';
 import { readFileSync, readdirSync } from 'fs';
+import { execSync } from 'child_process';
 import { join, extname } from 'path';
+
+const gitAuthor = (() => {
+  try { return execSync('git config user.name', { encoding: 'utf8', cwd: process.argv[2] || process.cwd() }).trim(); }
+  catch { return 'Developer'; }
+})();
 
 async function main() {
   const projectPath = process.argv[2] || process.cwd();
@@ -58,7 +64,7 @@ async function main() {
       const outputPath = `./test-${name}.png`;
       await generateCoverImage({
         headline: headline,
-        author: 'Test Developer',
+        author: gitAuthor,
         outputPath: outputPath,
         projectPath: projectPath,
         style: name,

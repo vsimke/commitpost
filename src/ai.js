@@ -22,6 +22,13 @@ export async function generatePost(commits, options = {}) {
   // Get tone profile and model from config, but allow override from options
   const toneProfile = options.toneProfile || getConfigValue('toneProfile', '');
   const model = getConfigValue('model', 'claude-3-sonnet-20240229');
+  const postLength = options.postLength || getConfigValue('postLength', 'medium');
+
+  const lengthInstructions = {
+    short:  'Write a short post under 100 words — punchy, one idea, no "see more" cut-off. Works as a quick update or announcement.',
+    medium: 'Write a medium post of 200–280 words — enough to need a "see more" click, but tight and scannable. This is the LinkedIn sweet spot for developer posts.',
+    long:   'Write a long post of 400–500 words — a mini-story or technical deep-dive with a clear arc: problem → what you built → what you learned → takeaway.',
+  };
 
   // Format commits into a readable list
   const commitList = commits
@@ -34,7 +41,8 @@ export async function generatePost(commits, options = {}) {
   // Build the system prompt
   let systemPrompt = `You are an expert at writing engaging LinkedIn posts for developers. 
 Your posts are authentic, conversational, and highlight real work and learning.
-Keep posts concise (under 300 words), use casual language, and include 1-2 relevant emojis.
+${lengthInstructions[postLength] || lengthInstructions.medium}
+Use casual language and include 1-2 relevant emojis.
 Focus on the value and learning from the work, not just listing technical details.`;
 
   if (toneProfile) {

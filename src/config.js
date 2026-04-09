@@ -13,6 +13,7 @@ function getDefaultConfig() {
     toneProfile: '',
     apiKey: '',
     model: 'claude-opus-4-1',
+    postLength: 'medium',
     createdAt: new Date().toISOString(),
   };
 }
