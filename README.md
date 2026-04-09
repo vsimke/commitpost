@@ -199,7 +199,7 @@ gitpost generate --include-image --image-style <style-name> [options]
 # Use light_code style (default)
 gitpost generate --include-image --since 7
 
-# Use dark_code style  
+# Use dark_code style
 gitpost generate --include-image --image-style dark_code --since 7
 
 # Use minimal style
@@ -207,6 +207,7 @@ gitpost generate --include-image --image-style minimal
 ```
 
 Each style includes:
+
 - **Colors** — Gradient backgrounds customized for readability
 - **Code Visibility** — Optional blurred code snippet from your repository
 - **Text Layout** — Professional typography with word-boundary wrapping
