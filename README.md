@@ -174,6 +174,20 @@ gitpost generate --tone <profile-name> --since 7
 - `startup_rapid` — Fast-paced, shipping-focused
 - `collaboration_focused` — Highlights teamwork and shared vision
 
+### Automatic Code Extraction
+
+When you use `--include-image`, GitPost automatically finds and displays real code from your commits:
+
+**How it works:**
+
+1. Looks at the files you changed in your commits
+2. Filters for code files (`.js`, `.ts`, `.py`, `.java`, etc.)
+3. **Automatically skips test files** — excludes `test/`, `__tests__/`, `.test.`, `.spec.` patterns
+4. Shows the first 8-12 lines from a random changed production file
+5. Displays code in the top 60% of the image, headlines in the bottom 40%
+
+**Result:** Your LinkedIn cover image features actual code you shipped, not generic project files!
+
 ### Cover Image Styles
 
 ```bash
@@ -196,21 +210,24 @@ gitpost generate --include-image --image-style <style-name> [options]
 **Examples:**
 
 ```bash
-# Use light_code style (default)
+# Use light_code style (default) - includes actual code from your changes
 gitpost generate --include-image --since 7
 
-# Use dark_code style
+# Use dark_code style with visible code from commits
 gitpost generate --include-image --image-style dark_code --since 7
 
-# Use minimal style
+# Use minimal style (no code, just clean layout)
 gitpost generate --include-image --image-style minimal
+
+# Combine tone profile and image style
+gitpost generate --tone technical_reflective --image-style dark_code --include-image --since 7
 ```
 
 Each style includes:
 
 - **Colors** — Gradient backgrounds customized for readability
-- **Code Visibility** — Optional blurred code snippet from your repository
-- **Text Layout** — Professional typography with word-boundary wrapping
+- **Code Visibility** — Real code snippets from files you changed (auto-skips test files)
+- **Professional Layout** — Code area separate from text area, no overlap
 - **Accent Elements** — Color-coded accents for visual interest
 
 ### Set Up Configuration
