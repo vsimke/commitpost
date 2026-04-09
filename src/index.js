@@ -8,6 +8,7 @@ import { getCommits, getDiffStats, formatCommitSummary } from './git.js';
 import { generatePost, generateHeadline } from './ai.js';
 import { loadConfig, saveConfig, updateConfig, displayConfig, hasToneProfile } from './config.js';
 import { generateCoverImage, formatHeadlineForImage } from './image.js';
+import { getToneProfile, displayToneProfiles } from './tones.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -24,6 +25,7 @@ program
   .description('Generate a LinkedIn post from recent git commits')
   .option('--author <name>', 'Git author name to filter commits', process.env.GIT_AUTHOR_NAME || '')
   .option('--since <days>', 'Number of days back to look at commits', '7')
+  .option('--tone <name>', 'Use a built-in tone profile (run `gitpost list-tones` to see options)')
   .option('--include-image', 'Generate a cover image', false)
   .action(async (options) => {
     try {
@@ -44,9 +46,22 @@ program
         process.exit(1);
       }
 
+      // Handle tone profile selection
+      let toneProfile = '';
+      if (options.tone) {
+        const selectedTone = getToneProfile(options.tone);
+        if (!selectedTone) {
+          console.error(`❌ Tone profile "${options.tone}" not found.`);
+          console.log(displayToneProfiles());
+          process.exit(1);
+        }
+        toneProfile = selectedTone.content;
+        console.log(`📚 Using tone: ${selectedTone.name}\n`);
+      }
+
       // Generate post
       console.log('✨ Generating post with AI...\n');
-      const post = await generatePost(commits);
+      const post = await generatePost(commits, { toneProfile });
       
       console.log('📝 Generated Post:\n');
       console.log('---');
@@ -154,6 +169,16 @@ program
       console.error('❌ Error:', error.message);
       process.exit(1);
     }
+  });
+
+program
+  .command('list-tones')
+  .alias('tones')
+  .description('List available built-in tone profiles')
+  .action(() => {
+    console.log(displayToneProfiles());
+    console.log('\nUsage: gitpost generate --tone <name> [options]');
+    console.log('Example: gitpost generate --tone technical_reflective --since 7');
   });
 
 program.parse();
