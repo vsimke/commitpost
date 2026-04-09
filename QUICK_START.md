@@ -45,11 +45,11 @@ All configuration is stored in: `~/.gitpost/config.json`
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
+| Problem            | Solution                                                                       |
+| ------------------ | ------------------------------------------------------------------------------ |
 | "No API key found" | `export ANTHROPIC_API_KEY=sk-ant-...` or `gitpost config --set-key sk-ant-...` |
-| "No commits found" | Try `--since 30` or check author name with `git log --author "Your Name"` |
-| "Invalid API key" | Check your key at console.anthropic.com |
+| "No commits found" | Try `--since 30` or check author name with `git log --author "Your Name"`      |
+| "Invalid API key"  | Check your key at console.anthropic.com                                        |
 
 ## Environment Variables
 

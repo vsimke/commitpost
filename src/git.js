@@ -17,7 +17,7 @@ export async function getCommits({ author = '', days = 7, cwd = process.cwd() })
   sinceDate.setDate(sinceDate.getDate() - days);
   const sinceDateStr = sinceDate.toISOString().split('T')[0];
 
-  const logOptions = [`--since=${sinceDateStr}`, '-n', '100'];
+  const logOptions = [`--since=${sinceDateStr}`, '-n', '100', '--no-merges'];
 
   // Add author filter if provided
   if (author && author.trim()) {
@@ -57,7 +57,7 @@ export async function getDiffStats({ author = '', days = 7, cwd = process.cwd() 
   const sinceDateStr = sinceDate.toISOString().split('T')[0];
 
   try {
-    let cmd = `git log --since=${sinceDateStr} --diff-stat=.01 --stat`;
+    let cmd = `git log --since=${sinceDateStr} --no-merges --diff-stat=.01 --stat`;
     if (author && author.trim()) {
       cmd += ` --author="${author}"`;
     }

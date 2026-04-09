@@ -5,21 +5,25 @@ Generate compelling LinkedIn posts from your git history in seconds. GitPost rea
 ## Features
 
 ✨ **AI-Powered Post Generation**
+
 - Turns git commits into engaging LinkedIn posts
 - Learns your writing style from a tone profile
 - One-command workflow
 
 🎨 **Cover Images**
+
 - Automatically generates 1200×627px LinkedIn-optimized images
 - Professional gradient design with your headline and name
 - Optional flag: `--include-image`
 
 ⚙️ **Personalization**
+
 - Set up a tone profile once with your writing sample
 - All posts match your authentic voice
 - Supports Anthropic Claude API
 
 🚀 **Simple CLI**
+
 - No complex setup — just `npm install -g gitpost` and go
 - Works anywhere in your project
 - Sensible defaults with tons of options
@@ -35,6 +39,7 @@ npm install -g gitpost
 ```
 
 Verify installation:
+
 ```bash
 gitpost --version
 gitpost --help
@@ -60,6 +65,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 Or save it to config:
+
 ```bash
 gitpost config --set-key sk-ant-...
 ```
@@ -70,19 +76,21 @@ Create a file with a writing sample (previous LinkedIn post, blog article, etc.)
 
 ```bash
 cat > my-tone.txt << 'EOF'
-Just shipped a massive refactor of our authentication system. 
-We moved from custom middleware to OAuth2, cut our auth code by 60%, 
+Just shipped a massive refactor of our authentication system.
+We moved from custom middleware to OAuth2, cut our auth code by 60%,
 and gave security a huge boost. Learned a ton about distributed state management.
 Building resilient systems is hard work, but it's worth the effort.
 EOF
 ```
 
 Set it:
+
 ```bash
 gitpost config --set-tone my-tone.txt
 ```
 
 View your config:
+
 ```bash
 gitpost config --view
 ```
@@ -96,6 +104,7 @@ gitpost generate --author "Your Name" --since 7 --include-image
 ```
 
 This will:
+
 - Read commits from the last 7 days
 - Filter by your name
 - Generate a LinkedIn post
@@ -113,6 +122,7 @@ gitpost generate [options]
 ```
 
 **Options:**
+
 - `--author <name>` — Filter commits by author (default: `$GIT_AUTHOR_NAME` env var)
 - `--since <days>` — Number of days back (default: `7`)
 - `--include-image` — Generate a cover image (default: false)
@@ -140,6 +150,7 @@ gitpost setup
 ```
 
 Interactive setup that shows:
+
 - Current configuration
 - API key status
 - How to set your tone profile
@@ -151,6 +162,7 @@ gitpost config [options]
 ```
 
 **Options:**
+
 - `--view` — Display current configuration
 - `--set-tone <file>` — Set tone profile from a file
 - `--set-key <key>` — Set Anthropic API key
@@ -234,17 +246,20 @@ gitpost generate --since 1
 Your tone profile is the key to authentic posts. Here's what works:
 
 ✅ **Use 1–2 writing samples** (200–500 words total)
+
 - Previous LinkedIn posts
 - Blog articles about technical work
 - Slack messages or email summaries
-- Things that reflect *your* voice
+- Things that reflect _your_ voice
 
 ✅ **Include specifics**
+
 - Technical details about what you shipped
 - Problems you solved
 - Things you learned
 
 ❌ **Avoid generic templates**
+
 - "I'm excited to share…"
 - Standard resume language
 - Buzzwords without context
@@ -252,8 +267,8 @@ Your tone profile is the key to authentic posts. Here's what works:
 **Example tone profile:**
 
 ```
-Just shipped a massive refactor of our auth system. We moved from custom 
-middleware to OAuth2, cut our auth handling code by 60%, and gave security 
+Just shipped a massive refactor of our auth system. We moved from custom
+middleware to OAuth2, cut our auth handling code by 60%, and gave security
 a huge boost. Zero downtime migration using feature flags.
 
 The best part? Learned a ton about distributed state management and rate limiting.
@@ -309,15 +324,15 @@ GitPost prints your generated post to the terminal:
 
 📝 Generated Post:
 ---
-Just shipped a massive refactor of our authentication system. We moved from 
-custom middleware to OAuth2, cut our auth handling code by 60%, and gave security 
+Just shipped a massive refactor of our authentication system. We moved from
+custom middleware to OAuth2, cut our auth handling code by 60%, and gave security
 a huge boost in the process.
 
-The best part? Zero downtime migration. We gradually rolled out the new system 
-behind a feature flag, monitored metrics obsessively, and flipped the switch 
+The best part? Zero downtime migration. We gradually rolled out the new system
+behind a feature flag, monitored metrics obsessively, and flipped the switch
 on a Tuesday afternoon. The team nailed the execution.
 
-Learned a ton about state management in distributed systems and rate limiting 
+Learned a ton about state management in distributed systems and rate limiting
 strategies. If you're tackling similar challenges, happy to chat about our approach.
 ---
 
@@ -398,7 +413,7 @@ gitpost generate --since 7 --include-image && open gitpost-cover.png
 
 ```bash
 for author in "Alice" "Bob" "Charlie"; do
-  echo "=== $author ===" 
+  echo "=== $author ==="
   gitpost generate --author "$author" --since 7
   echo ""
 done
@@ -415,6 +430,7 @@ Edit `~/.gitpost/config.json`:
 ```
 
 Available models:
+
 - `claude-3-5-sonnet-20241022` (default, cost-effective)
 - `claude-3-opus-20240229` (more capable)
 
@@ -442,6 +458,7 @@ npm run dev
 ```
 
 Please submit:
+
 - Bug reports with reproducible examples
 - Feature requests with clear use cases
 - PRs with tests and documentation
