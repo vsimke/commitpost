@@ -126,6 +126,7 @@ gitpost generate [options]
 - `--author <name>` — Filter commits by author (default: `$GIT_AUTHOR_NAME` env var)
 - `--since <days>` — Number of days back (default: `7`)
 - `--tone <name>` — Use a built-in tone profile (run `gitpost list-tones` to see options)
+- `--image-style <name>` — Cover image style (default: `light_code`, run `gitpost list-image-styles` to see options)
 - `--include-image` — Generate a cover image (default: false)
 
 **Examples:**
@@ -140,8 +141,14 @@ gitpost generate --author "Jane Doe" --since 30
 # Use a built-in tone profile
 gitpost generate --tone technical_reflective --since 7
 
-# With cover image
-gitpost generate --author "Jane Doe" --include-image --tone concise_action_oriented
+# With cover image using default light_code style
+gitpost generate --author "Jane Doe" --include-image
+
+# With cover image using dark_code style
+gitpost generate --author "Jane Doe" --include-image --image-style dark_code
+
+# Combine tone and image styles
+gitpost generate --tone concise_action_oriented --image-style minimal --include-image --since 7
 
 # All commits since a specific date (no date limit)
 gitpost generate --since 365
@@ -166,6 +173,44 @@ gitpost generate --tone <profile-name> --since 7
 - `learning_focused` — Emphasizes growth and new skills
 - `startup_rapid` — Fast-paced, shipping-focused
 - `collaboration_focused` — Highlights teamwork and shared vision
+
+### Cover Image Styles
+
+```bash
+gitpost list-image-styles
+```
+
+Shows all available image styles for cover image generation. Customize the visual appearance to match your personal brand.
+
+```bash
+gitpost generate --include-image --image-style <style-name> [options]
+```
+
+**Built-in Image Styles:**
+
+- `light_code` (default) — Light background with visible code snippet, great for readability
+- `dark_code` — Dark background with subtle blurred code, professional look
+- `minimal` — Clean white gradient with no code, simple and elegant
+- `dark_minimal` — Dark gradient with clean typography, modern aesthetic
+
+**Examples:**
+
+```bash
+# Use light_code style (default)
+gitpost generate --include-image --since 7
+
+# Use dark_code style  
+gitpost generate --include-image --image-style dark_code --since 7
+
+# Use minimal style
+gitpost generate --include-image --image-style minimal
+```
+
+Each style includes:
+- **Colors** — Gradient backgrounds customized for readability
+- **Code Visibility** — Optional blurred code snippet from your repository
+- **Text Layout** — Professional typography with word-boundary wrapping
+- **Accent Elements** — Color-coded accents for visual interest
 
 ### Set Up Configuration
 
@@ -214,14 +259,16 @@ GitPost stores configuration in `~/.gitpost/config.json`:
 {
   "toneProfile": "Your writing sample here...",
   "apiKey": "sk-ant-...",
-  "model": "claude-3-5-sonnet-20241022",
+  "model": "claude-opus-4-1",
+  "imageStyle": "light_code",
   "createdAt": "2026-04-08T15:30:00.000Z"
 }
 ```
 
 - **toneProfile**: Your writing sample (optional but recommended)
 - **apiKey**: Anthropic API key (optional; falls back to `ANTHROPIC_API_KEY` env var)
-- **model**: Claude model to use (default: Sonnet 3.5)
+- **model**: Claude model to use (default: `claude-opus-4-1`)
+- **imageStyle**: Default cover image style (default: `light_code`). Can be overridden with `--image-style` flag
 
 ---
 
