@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { readdirSync, readFileSync } from 'fs';
 import { join, extname } from 'path';
+import { getImageStyle } from './image-styles.js';
 
 // LinkedIn optimal cover image size
 const IMAGE_WIDTH = 1200;
@@ -28,7 +29,7 @@ export function pickRandomSourceFile(projectPath) {
     
     return {
       filename: randomFile.split('/').pop(),
-      content: content.split('\n').slice(0, 8).join('\n'), // First 8 lines
+      content: content.split('\n').slice(0, 8).join('\n'),
     };
   } catch (error) {
     return null;
@@ -36,13 +37,52 @@ export function pickRandomSourceFile(projectPath) {
 }
 
 /**
- * Generate SVG with blurred code background and text overlay
+ * Wrap text to fit within width
+ * @param {string} text - Text to wrap
+ * @param {number} maxCharsPerLine - Characters per line
+ * @returns {Array} Array of text chunks
+ */
+function wrapText(text, maxCharsPerLine = 40) {
+  const words = text.split(' ');
+  const lines = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
+      currentLine = currentLine ? currentLine + ' ' + word : word;
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  if (currentLine) lines.push(currentLine);
+
+  return lines;
+}
+
+/**
+ * Generate SVG cover image with configurable style
  * @param {string} headline - Headline text
  * @param {string} author - Author name
  * @param {string} codeSnippet - Code snippet for background
+ * @param {Object} style - Image style config
  * @returns {string} SVG markup
  */
-function createCoverSvg(headline, author, codeSnippet = '') {
+function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
+  // Default light style
+  const defaultStyle = {
+    bgColor1: '#f8fafc',
+    bgColor2: '#e2e8f0',
+    codeOpacity: 0.25,
+    codeBlur: 2,
+    overlayColor: '#ffffff',
+    overlayOpacity: 0.6,
+    textColor: '#0f172a',
+    accentColor: '#10b981',
+  };
+
+  const colors = { ...defaultStyle, ...style };
+
   const escapeXml = (str) => {
     return str
       .replace(/&/g, '&amp;')
@@ -54,59 +94,65 @@ function createCoverSvg(headline, author, codeSnippet = '') {
 
   const headlineText = escapeXml(headline);
   const authorText = escapeXml(author);
-  const codeText = escapeXml(codeSnippet.substring(0, 200)); // Limit code length
+  const codeLines = codeSnippet.substring(0, 150).split('\n').slice(0, 3);
+
+  // Wrap headline to 2 lines max
+  const headlineLines = wrapText(headlineText, 40);
+
+  let codeLinesXml = '';
+  codeLines.forEach((line, i) => {
+    codeLinesXml += `<tspan x="50" dy="${i === 0 ? '0' : '20'}">${escapeXml(line.substring(0, 80))}</tspan>`;
+  });
+
+  const overlayRect = colors.overlayOpacity > 0 
+    ? `<rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="${colors.overlayColor}" opacity="${colors.overlayOpacity}" />`
+    : '';
+
+  const codeGroup = colors.codeOpacity > 0
+    ? `<g filter="url(#codeBlur)" opacity="${colors.codeOpacity}">
+        <text x="50" y="100" font-family="Monaco, monospace" font-size="14" fill="${colors.accentColor}">
+          ${codeLinesXml}
+        </text>
+      </g>`
+    : '';
 
   return `
     <svg width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <!-- Gradient background -->
         <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
-          <stop offset="100%" style="stop-color:#1a1f35;stop-opacity:1" />
+          <stop offset="0%" style="stop-color:${colors.bgColor1};stop-opacity:1" />
+          <stop offset="100%" style="stop-color:${colors.bgColor2};stop-opacity:1" />
         </linearGradient>
-        
-        <!-- Blur filter for code -->
         <filter id="codeBlur">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="${colors.codeBlur}" />
         </filter>
-        
-        <!-- Dark overlay -->
-        <linearGradient id="overlay" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style="stop-color:#000000;stop-opacity:0.7" />
-          <stop offset="100%" style="stop-color:#000000;stop-opacity:0.5" />
-        </linearGradient>
       </defs>
       
-      <!-- Background -->
+      <!-- Background gradient -->
       <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bg)" />
       
-      <!-- Blurred code background (if available) -->
-      <g filter="url(#codeBlur)" opacity="0.15">
-        <text x="50" y="100" font-family="Monaco, monospace" font-size="16" fill="#10b981">
-          <tspan x="50">${codeText.split('\n').slice(0, 3).join('\\n')}</tspan>
-        </text>
-      </g>
+      <!-- Blurred code background -->
+      ${codeGroup}
       
-      <!-- Dark overlay for readability -->
-      <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#overlay)" />
+      <!-- Overlay for readability -->
+      ${overlayRect}
       
       <!-- Left accent bar -->
-      <rect x="0" y="0" width="6" height="${IMAGE_HEIGHT}" fill="#10b981" />
+      <rect x="0" y="0" width="6" height="${IMAGE_HEIGHT}" fill="${colors.accentColor}" />
       
-      <!-- Headline - positioned to avoid cutoff -->
-      <text x="60" y="240" font-family="system-ui, -apple-system, sans-serif" font-size="52" font-weight="700" fill="#ffffff">
-        <tspan x="60" dy="0">${headlineText.substring(0, 40)}</tspan>
-        ${headlineText.length > 40 ? `<tspan x="60" dy="65">${headlineText.substring(40, 80)}</tspan>` : ''}
+      <!-- Headline lines -->
+      <text x="60" y="240" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="${colors.textColor}">
+        ${headlineLines.map((line, i) => `<tspan x="60" dy="${i === 0 ? '0' : '60'}">${line}</tspan>`).join('')}
       </text>
       
       <!-- Author attribution -->
-      <text x="60" y="550" font-family="system-ui, -apple-system, sans-serif" font-size="20" fill="#94a3b8">
+      <text x="60" y="550" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="${colors.textColor}" opacity="0.8">
         — ${authorText}
       </text>
       
-      <!-- Small "by gitpost" label -->
-      <text x="${IMAGE_WIDTH - 200}" y="40" font-family="Monaco, monospace" font-size="13" fill="#10b98166">
-        Generated by gitpost
+      <!-- Badge -->
+      <text x="${IMAGE_WIDTH - 200}" y="40" font-family="Monaco, monospace" font-size="12" fill="${colors.accentColor}" opacity="0.6">
+        by gitpost
       </text>
     </svg>
   `;
@@ -118,7 +164,8 @@ function createCoverSvg(headline, author, codeSnippet = '') {
  * @param {string} options.headline - Post headline
  * @param {string} options.author - Author name
  * @param {string} options.outputPath - Where to save the image
- * @param {string} options.projectPath - Project root (for picking source file)
+ * @param {string} options.projectPath - Project root
+ * @param {string} options.style - Image style name or config object
  * @returns {Promise<string>} Path to the generated image
  */
 export async function generateCoverImage({
@@ -126,30 +173,42 @@ export async function generateCoverImage({
   author = 'Developer',
   outputPath = './gitpost-cover.png',
   projectPath = process.cwd(),
+  style = 'light_code',
 } = {}) {
   try {
-    // Try to get a code snippet from the project
+    // Get style config
+    let styleConfig = {};
+    if (typeof style === 'string') {
+      const styleObj = getImageStyle(style);
+      if (styleObj) {
+        styleConfig = styleObj.config;
+      }
+    } else if (typeof style === 'object') {
+      styleConfig = style;
+    }
+
+    // Get code snippet
     let codeSnippet = '';
     const sourceFile = pickRandomSourceFile(projectPath);
     if (sourceFile) {
       codeSnippet = sourceFile.content;
     }
 
-    // Create the SVG with code background
-    const svgString = createCoverSvg(headline, author, codeSnippet);
+    // Create SVG
+    const svgString = createCoverSvg(headline, author, codeSnippet, styleConfig);
 
-    // Convert SVG to PNG using sharp
+    // Convert to PNG
     const buffer = await sharp(Buffer.from(svgString), {
       density: 150,
     })
       .png()
       .toBuffer();
 
-    // Save the final image
+    // Save
     await sharp(buffer)
       .resize(IMAGE_WIDTH, IMAGE_HEIGHT, {
         fit: 'contain',
-        background: { r: 15, g: 23, b: 42, alpha: 1 },
+        background: { r: 248, g: 250, b: 252, alpha: 1 },
       })
       .png()
       .toFile(outputPath);

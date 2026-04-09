@@ -7,8 +7,9 @@ import { fileURLToPath } from 'url';
 import { getCommits, getDiffStats, formatCommitSummary } from './git.js';
 import { generatePost, generateHeadline } from './ai.js';
 import { loadConfig, saveConfig, updateConfig, displayConfig, hasToneProfile } from './config.js';
-import { generateCoverImage, formatHeadlineForImage } from './image.js';
+import { generateCoverImage } from './image.js';
 import { getToneProfile, displayToneProfiles } from './tones.js';
+import { getImageStyle, displayImageStyles } from './image-styles.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf8'));
@@ -26,6 +27,7 @@ program
   .option('--author <name>', 'Git author name to filter commits', process.env.GIT_AUTHOR_NAME || '')
   .option('--since <days>', 'Number of days back to look at commits', '7')
   .option('--tone <name>', 'Use a built-in tone profile (run `gitpost list-tones` to see options)')
+  .option('--image-style <name>', 'Cover image style for --include-image (run `gitpost list-image-styles` to see options)', 'light_code')
   .option('--include-image', 'Generate a cover image', false)
   .action(async (options) => {
     try {
@@ -73,6 +75,14 @@ program
         try {
           console.log('🎨 Generating cover image...');
           
+          // Validate image style
+          const imageStyle = getImageStyle(options.imageStyle);
+          if (!imageStyle) {
+            console.error(`❌ Image style "${options.imageStyle}" not found.`);
+            console.log(displayImageStyles());
+            process.exit(1);
+          }
+          
           // Try to generate headline, fallback to first commit message if AI fails
           let headline = commits[0]?.message || 'What I shipped this week';
           try {
@@ -82,17 +92,18 @@ program
             console.log('  (Using commit message as headline)\n');
           }
           
-          const formattedHeadline = formatHeadlineForImage(headline);
-          
           // Get author name from commits or use default
           const author = commits[0]?.author || 'Developer';
           
+          console.log(`📚 Using style: ${imageStyle.name}\n`);
+          
           // Generate image
           const imagePath = await generateCoverImage({
-            headline: formattedHeadline,
+            headline: headline,
             author: author,
             outputPath: './gitpost-cover.png',
             projectPath: process.cwd(),
+            style: options.imageStyle,
           });
 
           console.log(`✅ Cover image saved: ${imagePath}\n`);
@@ -179,6 +190,16 @@ program
     console.log(displayToneProfiles());
     console.log('\nUsage: gitpost generate --tone <name> [options]');
     console.log('Example: gitpost generate --tone technical_reflective --since 7');
+  });
+
+program
+  .command('list-image-styles')
+  .alias('image-styles')
+  .description('List available cover image styles')
+  .action(() => {
+    console.log(displayImageStyles());
+    console.log('\nUsage: gitpost generate --image-style <name> --include-image [options]');
+    console.log('Example: gitpost generate --image-style dark_code --include-image --since 7');
   });
 
 program.parse();
