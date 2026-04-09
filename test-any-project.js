@@ -22,7 +22,7 @@ const gitAuthor = (() => {
 async function main() {
   const projectPath = process.argv[2] || process.cwd();
   
-  console.log('\n🖼️  GitPost Image Generation Test\n');
+  console.log('\n🖼️  CommitPost Image Generation Test\n');
   console.log(`📁 Project: ${projectPath}\n`);
 
   // Extract code

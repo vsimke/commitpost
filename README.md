@@ -1,6 +1,6 @@
-# GitPost — Dev LinkedIn Post Generator
+# CommitPost — Dev LinkedIn Post Generator
 
-Generate compelling LinkedIn posts from your git history in seconds. GitPost reads your recent commits, uses AI to craft a personalized post in your voice, and optionally generates a professional cover image.
+Generate compelling LinkedIn posts from your git history in seconds. CommitPost reads your recent commits, uses AI to craft a personalized post in your voice, and optionally generates a professional cover image.
 
 ## Features
 
@@ -24,7 +24,7 @@ Generate compelling LinkedIn posts from your git history in seconds. GitPost rea
 
 🚀 **Simple CLI**
 
-- No complex setup — just `npm install -g gitpost` and go
+- No complex setup — just `npm install -g commitpost` and go
 - Works anywhere in your project
 - Sensible defaults with tons of options
 
@@ -35,21 +35,21 @@ Generate compelling LinkedIn posts from your git history in seconds. GitPost rea
 ### Global CLI (Recommended)
 
 ```bash
-npm install -g gitpost
+npm install -g commitpost
 ```
 
 Verify installation:
 
 ```bash
-gitpost --version
-gitpost --help
+commitpost --version
+commitpost --help
 ```
 
 ### As a Project Dependency
 
 ```bash
-npm install --save-dev gitpost
-npx gitpost generate
+npm install --save-dev commitpost
+npx commitpost generate
 ```
 
 ---
@@ -58,7 +58,7 @@ npx gitpost generate
 
 ### 1. Set Your API Key
 
-GitPost uses the Anthropic Claude API. Get a free API key at [console.anthropic.com](https://console.anthropic.com).
+CommitPost uses the Anthropic Claude API. Get a free API key at [console.anthropic.com](https://console.anthropic.com).
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -67,7 +67,7 @@ export ANTHROPIC_API_KEY=sk-ant-...
 Or save it to config:
 
 ```bash
-gitpost config --set-key sk-ant-...
+commitpost config --set-key sk-ant-...
 ```
 
 ### 2. (Optional) Set Up Your Tone Profile
@@ -86,13 +86,13 @@ EOF
 Set it:
 
 ```bash
-gitpost config --set-tone my-tone.txt
+commitpost config --set-tone my-tone.txt
 ```
 
 View your config:
 
 ```bash
-gitpost config --view
+commitpost config --view
 ```
 
 ### 3. Generate Your First Post
@@ -100,7 +100,7 @@ gitpost config --view
 From within a git repository:
 
 ```bash
-gitpost generate --author "Your Name" --since 7 --include-image
+commitpost generate --author "Your Name" --since 7 --include-image
 ```
 
 This will:
@@ -108,7 +108,7 @@ This will:
 - Read commits from the last 7 days
 - Filter by your name
 - Generate a LinkedIn post
-- Create a cover image (`gitpost-cover.png`)
+- Create a cover image (`commitpost-cover.png`)
 - Print the post to your terminal
 
 ---
@@ -118,52 +118,52 @@ This will:
 ### Generate a Post
 
 ```bash
-gitpost generate [options]
+commitpost generate [options]
 ```
 
 **Options:**
 
 - `--author <name>` — Filter commits by author (default: `$GIT_AUTHOR_NAME` env var)
 - `--since <days>` — Number of days back (default: `7`)
-- `--tone <name>` — Use a built-in tone profile (run `gitpost list-tones` to see options)
-- `--image-style <name>` — Cover image style (default: `light_code`, run `gitpost list-image-styles` to see options)
+- `--tone <name>` — Use a built-in tone profile (run `commitpost list-tones` to see options)
+- `--image-style <name>` — Cover image style (default: `light_code`, run `commitpost list-image-styles` to see options)
 - `--include-image` — Generate a cover image (default: false)
 
 **Examples:**
 
 ```bash
 # Last 7 days, auto-detect author
-gitpost generate
+commitpost generate
 
 # Last 30 days, specific author
-gitpost generate --author "Jane Doe" --since 30
+commitpost generate --author "Jane Doe" --since 30
 
 # Use a built-in tone profile
-gitpost generate --tone technical_reflective --since 7
+commitpost generate --tone technical_reflective --since 7
 
 # With cover image using default light_code style
-gitpost generate --author "Jane Doe" --include-image
+commitpost generate --author "Jane Doe" --include-image
 
 # With cover image using dark_code style
-gitpost generate --author "Jane Doe" --include-image --image-style dark_code
+commitpost generate --author "Jane Doe" --include-image --image-style dark_code
 
 # Combine tone and image styles
-gitpost generate --tone concise_action_oriented --image-style minimal --include-image --since 7
+commitpost generate --tone concise_action_oriented --image-style minimal --include-image --since 7
 
 # All commits since a specific date (no date limit)
-gitpost generate --since 365
+commitpost generate --since 365
 ```
 
 ### List Available Tone Profiles
 
 ```bash
-gitpost list-tones
+commitpost list-tones
 ```
 
 Shows all built-in tone profiles with descriptions. Use the profile name with `--tone` flag:
 
 ```bash
-gitpost generate --tone <profile-name> --since 7
+commitpost generate --tone <profile-name> --since 7
 ```
 
 **Built-in Tone Profiles:**
@@ -176,7 +176,7 @@ gitpost generate --tone <profile-name> --since 7
 
 ### Automatic Code Extraction
 
-When you use `--include-image`, GitPost automatically finds and displays real code from your commits:
+When you use `--include-image`, CommitPost automatically finds and displays real code from your commits:
 
 **How it works:**
 
@@ -191,13 +191,13 @@ When you use `--include-image`, GitPost automatically finds and displays real co
 ### Cover Image Styles
 
 ```bash
-gitpost list-image-styles
+commitpost list-image-styles
 ```
 
 Shows all available image styles for cover image generation. Customize the visual appearance to match your personal brand.
 
 ```bash
-gitpost generate --include-image --image-style <style-name> [options]
+commitpost generate --include-image --image-style <style-name> [options]
 ```
 
 **Built-in Image Styles:**
@@ -211,16 +211,16 @@ gitpost generate --include-image --image-style <style-name> [options]
 
 ```bash
 # Use light_code style (default) - includes actual code from your changes
-gitpost generate --include-image --since 7
+commitpost generate --include-image --since 7
 
 # Use dark_code style with visible code from commits
-gitpost generate --include-image --image-style dark_code --since 7
+commitpost generate --include-image --image-style dark_code --since 7
 
 # Use minimal style (no code, just clean layout)
-gitpost generate --include-image --image-style minimal
+commitpost generate --include-image --image-style minimal
 
 # Combine tone profile and image style
-gitpost generate --tone technical_reflective --image-style dark_code --include-image --since 7
+commitpost generate --tone technical_reflective --image-style dark_code --include-image --since 7
 ```
 
 Each style includes:
@@ -233,7 +233,7 @@ Each style includes:
 ### Set Up Configuration
 
 ```bash
-gitpost setup
+commitpost setup
 ```
 
 Interactive setup that shows:
@@ -245,7 +245,7 @@ Interactive setup that shows:
 ### Manage Config
 
 ```bash
-gitpost config [options]
+commitpost config [options]
 ```
 
 **Options:**
@@ -258,20 +258,20 @@ gitpost config [options]
 
 ```bash
 # View config
-gitpost config --view
+commitpost config --view
 
 # Set tone profile
-gitpost config --set-tone writing-sample.txt
+commitpost config --set-tone writing-sample.txt
 
 # Set API key
-gitpost config --set-key sk-ant-...
+commitpost config --set-key sk-ant-...
 ```
 
 ---
 
 ## Configuration
 
-GitPost stores configuration in `~/.gitpost/config.json`:
+CommitPost stores configuration in `~/.commitpost/config.json`:
 
 ```json
 {
@@ -308,15 +308,15 @@ export GIT_AUTHOR_NAME="Your Name"         # Default author filter
 
 ```bash
 # Monday morning ritual
-gitpost generate --since 7 --include-image
-# → Generates last week's wins, saves to gitpost-cover.png
+commitpost generate --since 7 --include-image
+# → Generates last week's wins, saves to commitpost-cover.png
 ```
 
 ### Example 2: Team Updates
 
 ```bash
 # Generate post for a team member
-gitpost generate --author "Alice" --since 14 --include-image
+commitpost generate --author "Alice" --since 14 --include-image
 # → Last 2 weeks of Alice's commits, ready to share
 ```
 
@@ -324,7 +324,7 @@ gitpost generate --author "Alice" --since 14 --include-image
 
 ```bash
 # Just yesterday's commits
-gitpost generate --since 1
+commitpost generate --since 1
 # → Quick post about what shipped yesterday
 ```
 
@@ -334,11 +334,11 @@ gitpost generate --since 1
 
 ### Quick Start: Use Built-in Profiles
 
-No custom profile yet? Try one of GitPost's built-in tone profiles:
+No custom profile yet? Try one of CommitPost's built-in tone profiles:
 
 ```bash
-gitpost list-tones
-gitpost generate --tone technical_reflective --since 7
+commitpost list-tones
+commitpost generate --tone technical_reflective --since 7
 ```
 
 This lets you test before creating a custom profile.
@@ -381,8 +381,8 @@ Building resilient systems is hard work, but it's worth it.
 **To use your custom profile:**
 
 ```bash
-gitpost config --set-tone my-writing-sample.txt
-gitpost generate --since 7
+commitpost config --set-tone my-writing-sample.txt
+commitpost generate --since 7
 ```
 
 ---
@@ -400,8 +400,8 @@ gitpost generate --since 7
 # Option 1: Export as environment variable
 export ANTHROPIC_API_KEY=sk-ant-...
 
-# Option 2: Save to GitPost config
-gitpost config --set-key sk-ant-...
+# Option 2: Save to CommitPost config
+commitpost config --set-key sk-ant-...
 
 # Option 3: Add to ~/.bashrc (persistent)
 echo 'export ANTHROPIC_API_KEY=sk-ant-...' >> ~/.bashrc
@@ -419,7 +419,7 @@ source ~/.bashrc
 
 ### Terminal Output
 
-GitPost prints your generated post to the terminal:
+CommitPost prints your generated post to the terminal:
 
 ```
 🚀 Generating LinkedIn post...
@@ -450,7 +450,7 @@ strategies. If you're tackling similar challenges, happy to chat about our appro
 
 ### Cover Image
 
-When using `--include-image`, GitPost generates `gitpost-cover.png`:
+When using `--include-image`, CommitPost generates `commitpost-cover.png`:
 
 - **Size**: 1200×627 pixels (LinkedIn optimal)
 - **Design**: Professional gradient with headline overlay
@@ -467,11 +467,11 @@ When using `--include-image`, GitPost generates `gitpost-cover.png`:
 # Option 1: Set environment variable
 export ANTHROPIC_API_KEY=sk-ant-...
 
-# Option 2: Save to GitPost config
-gitpost config --set-key sk-ant-...
+# Option 2: Save to CommitPost config
+commitpost config --set-key sk-ant-...
 
 # Verify
-gitpost config --view
+commitpost config --view
 ```
 
 ### "No commits found"
@@ -483,10 +483,10 @@ Adjust your filters:
 git log --author="Your Name" --oneline | head
 
 # Try a wider date range
-gitpost generate --since 30
+commitpost generate --since 30
 
 # Or filter by email
-gitpost generate --author "you@example.com" --since 30
+commitpost generate --author "you@example.com" --since 30
 ```
 
 ### "Invalid API key"
@@ -514,8 +514,8 @@ npm install --save sharp
 ### Save Posts to Files
 
 ```bash
-gitpost generate --since 7 > my-post.txt
-gitpost generate --since 7 --include-image && open gitpost-cover.png
+commitpost generate --since 7 > my-post.txt
+commitpost generate --since 7 --include-image && open commitpost-cover.png
 ```
 
 ### Batch Generation (for teams)
@@ -523,14 +523,14 @@ gitpost generate --since 7 --include-image && open gitpost-cover.png
 ```bash
 for author in "Alice" "Bob" "Charlie"; do
   echo "=== $author ==="
-  gitpost generate --author "$author" --since 7
+  commitpost generate --author "$author" --since 7
   echo ""
 done
 ```
 
 ### Custom Model
 
-Edit `~/.gitpost/config.json`:
+Edit `~/.commitpost/config.json`:
 
 ```json
 {
@@ -546,8 +546,8 @@ Available models:
 
 ## Privacy & Security
 
-- **Your commits**: Read locally from your git history (never sent to GitPost servers)
-- **Your tone profile**: Stored in `~/.gitpost/config.json` (your machine only)
+- **Your commits**: Read locally from your git history (never sent to CommitPost servers)
+- **Your tone profile**: Stored in `~/.commitpost/config.json` (your machine only)
 - **API key**: Stored in config or environment (your choice, treat like a password)
 - **Posts**: Sent to Anthropic API (see [Anthropic Privacy Policy](https://www.anthropic.com/privacy))
 - **Generated images**: Saved locally to your disk
@@ -559,8 +559,8 @@ Available models:
 Found a bug? Have an idea? Contributions welcome!
 
 ```bash
-git clone https://github.com/USERNAME/gitpost.git
-cd gitpost
+git clone https://github.com/USERNAME/commitpost.git
+cd commitpost
 npm install
 npm run dev
 ```
@@ -581,9 +581,9 @@ MIT — See [LICENSE](./LICENSE) file
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/USERNAME/gitpost/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/USERNAME/gitpost/discussions)
-- **Email**: hello@gitpost.dev (coming soon)
+- **Issues**: [GitHub Issues](https://github.com/USERNAME/commitpost/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/USERNAME/commitpost/discussions)
+- **Email**: hello@commitpost.dev (coming soon)
 
 ---
 

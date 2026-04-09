@@ -17,7 +17,7 @@ const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 
 const program = new Command();
 
 program
-  .name('gitpost')
+  .name('commitpost')
   .description('Generate LinkedIn posts from your git history')
   .version(packageJson.version);
 
@@ -26,9 +26,9 @@ program
   .description('Generate a LinkedIn post from recent git commits')
   .option('--author <name>', 'Git author name to filter commits', process.env.GIT_AUTHOR_NAME || '')
   .option('--since <days>', 'Number of days back to look at commits', '7')
-  .option('--tone <name>', 'Use a built-in tone profile (run `gitpost list-tones` to see options)')
+  .option('--tone <name>', 'Use a built-in tone profile (run `commitpost list-tones` to see options)')
   .option('--length <size>', 'Post length: short (~100w), medium (~250w), long (~500w)', 'medium')
-  .option('--image-style <name>', 'Cover image style for --include-image (run `gitpost list-image-styles` to see options)', 'light_code')
+  .option('--image-style <name>', 'Cover image style for --include-image (run `commitpost list-image-styles` to see options)', 'light_code')
   .option('--include-image', 'Generate a cover image', false)
   .action(async (options) => {
     try {
@@ -102,7 +102,7 @@ program
           const imagePath = await generateCoverImage({
             headline: headline,
             author: author,
-            outputPath: './gitpost-cover.png',
+            outputPath: './commitpost-cover.png',
             projectPath: process.cwd(),
             style: options.imageStyle,
             commits: commits,
@@ -127,7 +127,7 @@ program
   .description('Set up tone profile from writing sample')
   .action(async () => {
     try {
-      console.log('📝 Setting up GitPost...\n');
+      console.log('📝 Setting up CommitPost...\n');
       
       // Check for API key
       const existingApiKey = process.env.ANTHROPIC_API_KEY;
@@ -142,7 +142,7 @@ program
       console.log('To set up your tone profile:');
       console.log('1. Write or paste a sample of your writing (a previous LinkedIn post, blog post, etc.)');
       console.log('2. Save it to a file');
-      console.log('3. Run: gitpost setup <file-path>\n');
+      console.log('3. Run: commitpost setup <file-path>\n');
       
       // TODO: Implement interactive tone profile capture
       console.log('📋 Current config:');
@@ -155,7 +155,7 @@ program
 
 program
   .command('config')
-  .description('Manage GitPost configuration')
+  .description('Manage CommitPost configuration')
   .option('--view', 'View current config', false)
   .option('--set-tone <file>', 'Set tone profile from a file')
   .option('--set-key <key>', 'Set Anthropic API key')
@@ -190,8 +190,8 @@ program
   .description('List available built-in tone profiles')
   .action(() => {
     console.log(displayToneProfiles());
-    console.log('\nUsage: gitpost generate --tone <name> [options]');
-    console.log('Example: gitpost generate --tone technical_reflective --since 7');
+    console.log('\nUsage: commitpost generate --tone <name> [options]');
+    console.log('Example: commitpost generate --tone technical_reflective --since 7');
   });
 
 program
@@ -200,8 +200,8 @@ program
   .description('List available cover image styles')
   .action(() => {
     console.log(displayImageStyles());
-    console.log('\nUsage: gitpost generate --image-style <name> --include-image [options]');
-    console.log('Example: gitpost generate --image-style dark_code --include-image --since 7');
+    console.log('\nUsage: commitpost generate --image-style <name> --include-image [options]');
+    console.log('Example: commitpost generate --image-style dark_code --include-image --since 7');
   });
 
 program.parse();

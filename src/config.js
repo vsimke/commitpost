@@ -2,7 +2,7 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 
-const CONFIG_DIR = join(homedir(), '.gitpost');
+const CONFIG_DIR = join(homedir(), '.commitpost');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 
 /**
@@ -19,7 +19,7 @@ function getDefaultConfig() {
 }
 
 /**
- * Load configuration from ~/.gitpost/config.json
+ * Load configuration from ~/.commitpost/config.json
  * @returns {Object} Configuration object
  */
 export function loadConfig() {
@@ -33,7 +33,7 @@ export function loadConfig() {
 }
 
 /**
- * Save configuration to ~/.gitpost/config.json
+ * Save configuration to ~/.commitpost/config.json
  * @param {Object} config - Configuration object to save
  */
 export function saveConfig(config) {
@@ -83,7 +83,7 @@ export function hasToneProfile() {
 export function displayConfig() {
   const config = loadConfig();
   const lines = [
-    '📋 GitPost Configuration:',
+    '📋 CommitPost Configuration:',
     '',
     `Model: ${config.model || 'Not set'}`,
     `Tone Profile: ${config.toneProfile ? '✅ Configured' : '❌ Not configured'}`,

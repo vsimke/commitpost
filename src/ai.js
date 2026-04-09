@@ -13,7 +13,7 @@ export async function generatePost(commits, options = {}) {
 
   if (!apiKey) {
     throw new Error(
-      'No API key found. Set ANTHROPIC_API_KEY env var or run `gitpost setup`'
+      'No API key found. Set ANTHROPIC_API_KEY env var or run `commitpost setup`'
     );
   }
 
@@ -80,7 +80,7 @@ Do not include hashtags or @ mentions unless absolutely necessary.`;
     throw new Error('Unexpected response format from API');
   } catch (error) {
     if (error.status === 401) {
-      throw new Error('Invalid API key. Check ANTHROPIC_API_KEY or run `gitpost setup`');
+      throw new Error('Invalid API key. Check ANTHROPIC_API_KEY or run `commitpost setup`');
     }
     throw new Error(`Failed to generate post: ${error.message}`);
   }

@@ -1,11 +1,11 @@
 {
-    "name": "gitpost",
+    "name": "commitpost",
     "version": "0.1.1",
     "description": "CLI tool to generate LinkedIn posts from git history with AI and cover images",
     "type": "module",
     "main": "src/index.js",
     "bin": {
-        "gitpost": "./src/index.js"
+        "commitpost": "src/index.js"
     },
     "scripts": {
         "dev": "node src/index.js",
@@ -23,16 +23,16 @@
         "social-media",
         "automation"
     ],
-    "author": "Vladimir",
+    "author": "vsimke",
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "https://github.com/USERNAME/gitpost.git"
+        "url": "git+https://github.com/vsimke/commitpost.git"
     },
     "bugs": {
-        "url": "https://github.com/USERNAME/gitpost/issues"
+        "url": "https://github.com/vsimke/commitpost/issues"
     },
-    "homepage": "https://github.com/USERNAME/gitpost#readme",
+    "homepage": "https://github.com/vsimke/commitpost#readme",
     "engines": {
         "node": ">=18.0.0"
     },

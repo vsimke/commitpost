@@ -319,7 +319,7 @@ function buildUiTree(headline, author, s) {
           type: 'div',
           props: {
             style: { position: 'absolute', right: 40, top: 24, fontFamily: 'monospace', fontSize: 12, color: s.accentColor, opacity: 0.7 },
-            children: 'by gitpost',
+            children: 'by commitpost',
           },
         },
       ],
@@ -472,7 +472,7 @@ function buildCoverTree(headline, author, codeSnippet, style) {
               color: s.accentColor,
               opacity: 0.6,
             },
-            children: 'by gitpost',
+            children: 'by commitpost',
           },
         },
       ],
@@ -494,7 +494,7 @@ function buildCoverTree(headline, author, codeSnippet, style) {
 export async function generateCoverImage({
   headline = 'What I shipped this week',
   author = 'Developer',
-  outputPath = './gitpost-cover.png',
+  outputPath = './commitpost-cover.png',
   projectPath = process.cwd(),
   style = 'light_code',
   commits = [],

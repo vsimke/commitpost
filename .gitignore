@@ -6,6 +6,6 @@ npm-debug.log*
 .env.local
 dist/
 build/
-.gitpost/
+.commitpost/
 test-*.png
 test-*.svg
