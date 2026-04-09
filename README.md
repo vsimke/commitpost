@@ -125,6 +125,7 @@ gitpost generate [options]
 
 - `--author <name>` — Filter commits by author (default: `$GIT_AUTHOR_NAME` env var)
 - `--since <days>` — Number of days back (default: `7`)
+- `--tone <name>` — Use a built-in tone profile (run `gitpost list-tones` to see options)
 - `--include-image` — Generate a cover image (default: false)
 
 **Examples:**
@@ -136,12 +137,35 @@ gitpost generate
 # Last 30 days, specific author
 gitpost generate --author "Jane Doe" --since 30
 
+# Use a built-in tone profile
+gitpost generate --tone technical_reflective --since 7
+
 # With cover image
-gitpost generate --author "Jane Doe" --include-image
+gitpost generate --author "Jane Doe" --include-image --tone concise_action_oriented
 
 # All commits since a specific date (no date limit)
 gitpost generate --since 365
 ```
+
+### List Available Tone Profiles
+
+```bash
+gitpost list-tones
+```
+
+Shows all built-in tone profiles with descriptions. Use the profile name with `--tone` flag:
+
+```bash
+gitpost generate --tone <profile-name> --since 7
+```
+
+**Built-in Tone Profiles:**
+
+- `technical_reflective` — Deep technical work with learning insights
+- `concise_action_oriented` — Direct and results-focused
+- `learning_focused` — Emphasizes growth and new skills
+- `startup_rapid` — Fast-paced, shipping-focused
+- `collaboration_focused` — Highlights teamwork and shared vision
 
 ### Set Up Configuration
 
@@ -243,7 +267,20 @@ gitpost generate --since 1
 
 ## Tone Profiles: Best Practices
 
-Your tone profile is the key to authentic posts. Here's what works:
+### Quick Start: Use Built-in Profiles
+
+No custom profile yet? Try one of GitPost's built-in tone profiles:
+
+```bash
+gitpost list-tones
+gitpost generate --tone technical_reflective --since 7
+```
+
+This lets you test before creating a custom profile.
+
+### Create a Custom Tone Profile
+
+Your custom tone profile is the key to authentic posts matching your unique voice. Here's what works:
 
 ✅ **Use 1–2 writing samples** (200–500 words total)
 
@@ -274,6 +311,13 @@ a huge boost. Zero downtime migration using feature flags.
 The best part? Learned a ton about distributed state management and rate limiting.
 
 Building resilient systems is hard work, but it's worth it.
+```
+
+**To use your custom profile:**
+
+```bash
+gitpost config --set-tone my-writing-sample.txt
+gitpost generate --since 7
 ```
 
 ---
