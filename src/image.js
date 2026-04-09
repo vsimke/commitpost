@@ -94,14 +94,14 @@ function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
 
   const headlineText = escapeXml(headline);
   const authorText = escapeXml(author);
-  const codeLines = codeSnippet.substring(0, 150).split('\n').slice(0, 3);
+  const codeLines = codeSnippet.substring(0, 200).split('\n').slice(0, 4);
 
   // Wrap headline to 2 lines max
   const headlineLines = wrapText(headlineText, 40);
 
   let codeLinesXml = '';
   codeLines.forEach((line, i) => {
-    codeLinesXml += `<tspan x="50" dy="${i === 0 ? '0' : '20'}">${escapeXml(line.substring(0, 80))}</tspan>`;
+    codeLinesXml += `<tspan x="50" dy="${i === 0 ? '0' : '24'}">${escapeXml(line.substring(0, 100))}</tspan>`;
   });
 
   const overlayRect = colors.overlayOpacity > 0 
@@ -110,7 +110,7 @@ function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
 
   const codeGroup = colors.codeOpacity > 0
     ? `<g filter="url(#codeBlur)" opacity="${colors.codeOpacity}">
-        <text x="50" y="100" font-family="Monaco, monospace" font-size="14" fill="${colors.accentColor}">
+        <text x="50" y="90" font-family="Monaco, monospace" font-size="16" font-weight="500" fill="${colors.accentColor}">
           ${codeLinesXml}
         </text>
       </g>`
@@ -131,11 +131,11 @@ function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
       <!-- Background gradient -->
       <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bg)" />
       
-      <!-- Blurred code background -->
-      ${codeGroup}
-      
       <!-- Overlay for readability -->
       ${overlayRect}
+      
+      <!-- Code background (on top of overlay so it's visible) -->
+      ${codeGroup}
       
       <!-- Left accent bar -->
       <rect x="0" y="0" width="6" height="${IMAGE_HEIGHT}" fill="${colors.accentColor}" />

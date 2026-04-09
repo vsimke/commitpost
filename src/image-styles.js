@@ -10,12 +10,12 @@ export const IMAGE_STYLES = {
     config: {
       bgColor1: '#f8fafc',
       bgColor2: '#e2e8f0',
-      codeOpacity: 0.25,
-      codeBlur: 2,
+      codeOpacity: 0.6,
+      codeBlur: 0,
       overlayColor: '#ffffff',
-      overlayOpacity: 0.6,
+      overlayOpacity: 0.15,
       textColor: '#0f172a',
-      accentColor: '#10b981',
+      accentColor: '#1e40af',
     },
   },
 
@@ -25,12 +25,12 @@ export const IMAGE_STYLES = {
     config: {
       bgColor1: '#0f172a',
       bgColor2: '#1a1f35',
-      codeOpacity: 0.15,
-      codeBlur: 3,
+      codeOpacity: 0.4,
+      codeBlur: 1,
       overlayColor: '#000000',
-      overlayOpacity: 0.5,
+      overlayOpacity: 0.25,
       textColor: '#ffffff',
-      accentColor: '#10b981',
+      accentColor: '#60a5fa',
     },
   },
 
