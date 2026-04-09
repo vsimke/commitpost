@@ -104,6 +104,7 @@ program
             outputPath: './gitpost-cover.png',
             projectPath: process.cwd(),
             style: options.imageStyle,
+            commits: commits,
           });
 
           console.log(`✅ Cover image saved: ${imagePath}\n`);

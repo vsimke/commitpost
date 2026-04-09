@@ -1,11 +1,66 @@
 import sharp from 'sharp';
 import { readdirSync, readFileSync } from 'fs';
+import { execSync } from 'child_process';
 import { join, extname } from 'path';
 import { getImageStyle } from './image-styles.js';
 
 // LinkedIn optimal cover image size
 const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 627;
+
+/**
+ * Extract code from files changed in commit
+ * Gets the list of changed file paths from git diff, then reads code from those files
+ * @param {Array} commits - Commit objects with hash property
+ * @returns {string} Code snippet from changed files
+ */
+function extractCodeFromChangedFiles(commits) {
+  try {
+    if (!commits || commits.length === 0) {
+      return '';
+    }
+
+    // Get the most recent commit
+    const latestCommit = commits[0];
+    
+    // Get list of changed files in this commit
+    const filesChanged = execSync(
+      `git diff-tree --no-commit-id --name-only -r ${latestCommit.hash} 2>/dev/null || echo ""`,
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
+    ).trim().split('\n').filter(f => f.length > 0);
+
+    if (filesChanged.length === 0) {
+      return '';
+    }
+
+    // Filter for code files (js, ts, jsx, tsx, py, etc)
+    const codeFiles = filesChanged.filter(f => 
+      /\.(js|ts|jsx|tsx|py|java|rb|go|rs|c|cpp|h|cs|php)$/.test(f)
+    );
+
+    if (codeFiles.length === 0) {
+      return '';
+    }
+
+    // Pick a random code file
+    const randomFile = codeFiles[Math.floor(Math.random() * codeFiles.length)];
+    
+    // Read the file content
+    const content = execSync(
+      `git show ${latestCommit.hash}:${randomFile} 2>/dev/null || echo ""`,
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
+    );
+
+    if (content && content.length > 0) {
+      // Return first 8 lines
+      return content.split('\n').slice(0, 8).join('\n');
+    }
+
+    return '';
+  } catch (error) {
+    return '';
+  }
+}
 
 /**
  * Pick a random source file from the project
@@ -166,6 +221,7 @@ function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
  * @param {string} options.outputPath - Where to save the image
  * @param {string} options.projectPath - Project root
  * @param {string} options.style - Image style name or config object
+ * @param {Array} options.commits - (Optional) Commit objects to extract code from
  * @returns {Promise<string>} Path to the generated image
  */
 export async function generateCoverImage({
@@ -174,6 +230,7 @@ export async function generateCoverImage({
   outputPath = './gitpost-cover.png',
   projectPath = process.cwd(),
   style = 'light_code',
+  commits = [],
 } = {}) {
   try {
     // Get style config
@@ -187,11 +244,19 @@ export async function generateCoverImage({
       styleConfig = style;
     }
 
-    // Get code snippet
+    // Get code snippet - prioritize git diff from commits
     let codeSnippet = '';
-    const sourceFile = pickRandomSourceFile(projectPath);
-    if (sourceFile) {
-      codeSnippet = sourceFile.content;
+    
+    if (commits && commits.length > 0) {
+      codeSnippet = extractCodeFromChangedFiles(commits);
+    }
+
+    // Fallback to random source file
+    if (!codeSnippet) {
+      const sourceFile = pickRandomSourceFile(projectPath);
+      if (sourceFile) {
+        codeSnippet = sourceFile.content;
+      }
     }
 
     // Create SVG
