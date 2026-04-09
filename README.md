@@ -425,15 +425,13 @@ Edit `~/.gitpost/config.json`:
 
 ```json
 {
-  "model": "claude-3-opus-20240229"
+  "model": "claude-opus-4-1"
 }
 ```
 
 Available models:
 
-- `claude-3-sonnet-20240229` (default, cost-effective)
-- `claude-3-opus-20240229` (more capable)
-- `claude-3-haiku-20240307` (faster, cheaper)
+- `claude-opus-4-1` (default, most capable)
 
 ---
 
