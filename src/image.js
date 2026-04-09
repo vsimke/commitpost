@@ -33,17 +33,28 @@ function extractCodeFromChangedFiles(commits) {
       return '';
     }
 
-    // Filter for code files (js, ts, jsx, tsx, py, etc)
-    const codeFiles = filesChanged.filter(f => 
+    // Filter for code files and exclude test/spec files
+    const codeFiles = filesChanged.filter(f => {
+      // Must be a code file
+      const isCodeFile = /\.(js|ts|jsx|tsx|py|java|rb|go|rs|c|cpp|h|cs|php)$/.test(f);
+      
+      // Exclude test/spec files (test.js, spec.ts, .test.js, .spec.ts, tests/, __tests__/, etc)
+      const isTestFile = /(test|spec|__tests__|\.test\.|\.spec\.)/.test(f);
+      
+      return isCodeFile && !isTestFile;
+    });
+
+    // If no non-test files, try test files as fallback
+    const filesToUse = codeFiles.length > 0 ? codeFiles : filesChanged.filter(f =>
       /\.(js|ts|jsx|tsx|py|java|rb|go|rs|c|cpp|h|cs|php)$/.test(f)
     );
 
-    if (codeFiles.length === 0) {
+    if (filesToUse.length === 0) {
       return '';
     }
 
     // Pick a random code file
-    const randomFile = codeFiles[Math.floor(Math.random() * codeFiles.length)];
+    const randomFile = filesToUse[Math.floor(Math.random() * filesToUse.length)];
     
     // Read the file content
     const content = execSync(
@@ -52,8 +63,8 @@ function extractCodeFromChangedFiles(commits) {
     );
 
     if (content && content.length > 0) {
-      // Return first 8 lines
-      return content.split('\n').slice(0, 8).join('\n');
+      // Return first 12 lines (more space for code now)
+      return content.split('\n').slice(0, 12).join('\n');
     }
 
     return '';
@@ -128,12 +139,12 @@ function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
   const defaultStyle = {
     bgColor1: '#f8fafc',
     bgColor2: '#e2e8f0',
-    codeOpacity: 0.25,
-    codeBlur: 2,
+    codeOpacity: 0.6,
+    codeBlur: 0,
     overlayColor: '#ffffff',
-    overlayOpacity: 0.6,
+    overlayOpacity: 0.15,
     textColor: '#0f172a',
-    accentColor: '#10b981',
+    accentColor: '#1e40af',
   };
 
   const colors = { ...defaultStyle, ...style };
@@ -149,23 +160,26 @@ function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
 
   const headlineText = escapeXml(headline);
   const authorText = escapeXml(author);
-  const codeLines = codeSnippet.substring(0, 200).split('\n').slice(0, 4);
+  // Show more lines of code now (12 instead of 4)
+  const codeLines = codeSnippet.substring(0, 300).split('\n').slice(0, 12);
 
   // Wrap headline to 2 lines max
   const headlineLines = wrapText(headlineText, 40);
 
   let codeLinesXml = '';
   codeLines.forEach((line, i) => {
-    codeLinesXml += `<tspan x="50" dy="${i === 0 ? '0' : '24'}">${escapeXml(line.substring(0, 100))}</tspan>`;
+    codeLinesXml += `<tspan x="40" dy="${i === 0 ? '20' : '18'}">${escapeXml(line.substring(0, 120))}</tspan>`;
   });
 
+  // Overlay only in text area (bottom 200px), not across entire image
   const overlayRect = colors.overlayOpacity > 0 
-    ? `<rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="${colors.overlayColor}" opacity="${colors.overlayOpacity}" />`
+    ? `<rect x="0" y="380" width="${IMAGE_WIDTH}" height="247" fill="${colors.overlayColor}" opacity="${colors.overlayOpacity}" />`
     : '';
 
+  // Code group - positioned higher with no overlay obscuring it
   const codeGroup = colors.codeOpacity > 0
-    ? `<g filter="url(#codeBlur)" opacity="${colors.codeOpacity}">
-        <text x="50" y="90" font-family="Monaco, monospace" font-size="16" font-weight="500" fill="${colors.accentColor}">
+    ? `<g opacity="${colors.codeOpacity}">
+        <text x="40" y="50" font-family="monospace" font-size="14" font-weight="400" fill="${colors.accentColor}">
           ${codeLinesXml}
         </text>
       </g>`
@@ -178,35 +192,32 @@ function createCoverSvg(headline, author, codeSnippet = '', style = {}) {
           <stop offset="0%" style="stop-color:${colors.bgColor1};stop-opacity:1" />
           <stop offset="100%" style="stop-color:${colors.bgColor2};stop-opacity:1" />
         </linearGradient>
-        <filter id="codeBlur">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="${colors.codeBlur}" />
-        </filter>
       </defs>
       
-      <!-- Background gradient -->
+      <!-- Background gradient (full height) -->
       <rect width="${IMAGE_WIDTH}" height="${IMAGE_HEIGHT}" fill="url(#bg)" />
-      
-      <!-- Overlay for readability -->
-      ${overlayRect}
-      
-      <!-- Code background (on top of overlay so it's visible) -->
-      ${codeGroup}
       
       <!-- Left accent bar -->
       <rect x="0" y="0" width="6" height="${IMAGE_HEIGHT}" fill="${colors.accentColor}" />
       
-      <!-- Headline lines -->
-      <text x="60" y="240" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="${colors.textColor}">
-        ${headlineLines.map((line, i) => `<tspan x="60" dy="${i === 0 ? '0' : '60'}">${line}</tspan>`).join('')}
+      <!-- Code area (top, no overlay) -->
+      ${codeGroup}
+      
+      <!-- Overlay for text readability (bottom area only) -->
+      ${overlayRect}
+      
+      <!-- Headline lines (in overlay area) -->
+      <text x="60" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="700" fill="${colors.textColor}">
+        ${headlineLines.map((line, i) => `<tspan x="60" dy="${i === 0 ? '0' : '55'}">${line}</tspan>`).join('')}
       </text>
       
-      <!-- Author attribution -->
-      <text x="60" y="550" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="${colors.textColor}" opacity="0.8">
+      <!-- Author attribution (in overlay area) -->
+      <text x="60" y="570" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="${colors.textColor}" opacity="0.9">
         — ${authorText}
       </text>
       
       <!-- Badge -->
-      <text x="${IMAGE_WIDTH - 200}" y="40" font-family="Monaco, monospace" font-size="12" fill="${colors.accentColor}" opacity="0.6">
+      <text x="${IMAGE_WIDTH - 180}" y="35" font-family="monospace" font-size="11" fill="${colors.accentColor}" opacity="0.7">
         by gitpost
       </text>
     </svg>

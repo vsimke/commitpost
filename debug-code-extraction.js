@@ -41,7 +41,19 @@ async function debugCodeExtraction() {
     );
 
     console.log(`💻 Code files that changed: ${codeFiles.length}\n`);
-    codeFiles.forEach(f => console.log(`  - ${f}`));
+    codeFiles.forEach(f => console.log(`  • ${f} (prod code)`));
+    
+    const testFiles = filesChanged.filter(f => {
+      const isCodeFile = /\.(js|ts|jsx|tsx|py|java|rb|go|rs|c|cpp|h|cs|php)$/.test(f);
+      const isTestFile = /(test|spec|__tests__|\.test\.|\.spec\.)/.test(f);
+      return isCodeFile && isTestFile;
+    });
+    
+    if (testFiles.length > 0) {
+      console.log(`\n🧪 Test files EXCLUDED: ${testFiles.length}\n`);
+      testFiles.forEach(f => console.log(`  • ${f} (skipped)`));
+    }
+    
     console.log('');
 
     if (codeFiles.length > 0) {
