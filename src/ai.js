@@ -19,8 +19,9 @@ export async function generatePost(commits, options = {}) {
 
   const client = new Anthropic({ apiKey });
 
-  // Get tone profile if set
+  // Get tone profile and model from config
   const toneProfile = getConfigValue('toneProfile', '');
+  const model = getConfigValue('model', 'claude-3-sonnet-20240229');
 
   // Format commits into a readable list
   const commitList = commits
@@ -51,7 +52,7 @@ Do not include hashtags or @ mentions unless absolutely necessary.`;
 
   try {
     const message = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: model,
       max_tokens: 1024,
       system: systemPrompt,
       messages: [
@@ -92,6 +93,8 @@ export async function generateHeadline(commits, options = {}) {
 
   const client = new Anthropic({ apiKey });
 
+  const model = getConfigValue('model', 'claude-3-sonnet-20240229');
+
   const commitList = commits
     .map((c) => c.message)
     .join('; ');
@@ -103,7 +106,7 @@ Return ONLY the headline text, nothing else.`;
 
   try {
     const message = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: model,
       max_tokens: 100,
       messages: [
         {

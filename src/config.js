@@ -12,7 +12,7 @@ function getDefaultConfig() {
   return {
     toneProfile: '',
     apiKey: '',
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-3-sonnet-20240229',
     createdAt: new Date().toISOString(),
   };
 }
