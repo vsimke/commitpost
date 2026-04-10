@@ -9,12 +9,9 @@ import { getConfigValue } from './config.js';
  * @returns {Promise<string>} Generated post text
  */
 export async function generatePost(commits, options = {}) {
-  const apiKey = options.apiKey || process.env.ANTHROPIC_API_KEY;
+  const apiKey = options.apiKey || process.env.ANTHROPIC_API_KEY || getConfigValue('apiKey', '');
 
   if (!apiKey) {
-    throw new Error(
-      'No API key found. Set ANTHROPIC_API_KEY env var or run `commitpost setup`'
-    );
   }
 
   const client = new Anthropic({ apiKey });
@@ -93,7 +90,7 @@ Do not include hashtags or @ mentions unless absolutely necessary.`;
  * @returns {Promise<string>} Generated headline
  */
 export async function generateHeadline(commits, options = {}) {
-  const apiKey = options.apiKey || process.env.ANTHROPIC_API_KEY;
+  const apiKey = options.apiKey || process.env.ANTHROPIC_API_KEY || getConfigValue('apiKey', '');
 
   if (!apiKey) {
     throw new Error('No API key found');
