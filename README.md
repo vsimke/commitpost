@@ -1,22 +1,22 @@
-# CommitPost — Dev LinkedIn Post Generator
+# CommitPost — Dev Content Generator from Git History
 
 [![npm version](https://img.shields.io/npm/v/commitpost.svg)](https://www.npmjs.com/package/commitpost)
 [![npm downloads](https://img.shields.io/npm/dm/commitpost.svg)](https://www.npmjs.com/package/commitpost)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Generate compelling LinkedIn posts from your git history in seconds. CommitPost reads your recent commits, uses AI to craft a personalized post in your voice, and optionally generates a professional cover image.
+Turn your git commits into shareable developer content in seconds. CommitPost reads your recent commits, uses AI to craft a post in your voice, and optionally generates a professional cover image — ready for LinkedIn, Bluesky, X, or any platform you publish on.
 
 ## Features
 
 ✨ **AI-Powered Post Generation**
 
-- Turns git commits into engaging LinkedIn posts
+- Turns git commits into engaging posts for LinkedIn, Bluesky, X, and more
 - Learns your writing style from a tone profile
 - One-command workflow
 
 🎨 **Cover Images**
 
-- Automatically generates 1200×627px LinkedIn-optimized images
+- Automatically generates 1200×627px cover images (LinkedIn/Open Graph optimized)
 - Professional gradient design with your headline and name
 - Optional flag: `--include-image`
 
@@ -76,7 +76,7 @@ commitpost config --set-key sk-ant-...
 
 ### 2. (Optional) Set Up Your Tone Profile
 
-Create a file with a writing sample (previous LinkedIn post, blog article, etc.):
+Create a file with a writing sample (previous post, blog article, etc.):
 
 ```bash
 cat > my-tone.txt << 'EOF'
@@ -111,9 +111,8 @@ This will:
 
 - Read commits from the last 7 days
 - Filter by your name
-- Generate a LinkedIn post
-- Create a cover image (`commitpost-cover.png`)
-- Print the post to your terminal
+- Generate a post + cover image
+- Print the post to your terminal — ready to paste anywhere
 
 ---
 
@@ -190,7 +189,7 @@ When you use `--include-image`, CommitPost automatically finds and displays real
 4. Shows the first 8-12 lines from a random changed production file
 5. Displays code in the top 60% of the image, headlines in the bottom 40%
 
-**Result:** Your LinkedIn cover image features actual code you shipped, not generic project files!
+**Result:** Your cover image features actual code you shipped, not generic project files — ready to post on LinkedIn, Bluesky, or anywhere else.
 
 ### Cover Image Styles
 
