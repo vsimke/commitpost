@@ -1,5 +1,9 @@
 # CommitPost — Dev LinkedIn Post Generator
 
+[![npm version](https://img.shields.io/npm/v/commitpost.svg)](https://www.npmjs.com/package/commitpost)
+[![npm downloads](https://img.shields.io/npm/dm/commitpost.svg)](https://www.npmjs.com/package/commitpost)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Generate compelling LinkedIn posts from your git history in seconds. CommitPost reads your recent commits, uses AI to craft a personalized post in your voice, and optionally generates a professional cover image.
 
 ## Features
