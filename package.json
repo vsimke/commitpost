@@ -1,6 +1,6 @@
 {
     "name": "commitpost",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Turn your git history into shareable developer content — posts and cover images for LinkedIn, Bluesky, X, and more",
     "type": "module",
     "main": "src/index.js",
