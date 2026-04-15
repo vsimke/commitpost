@@ -47,14 +47,14 @@ export ANTHROPIC_API_KEY=sk-ant-...
 commitpost generate [options]
 ```
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--author <name>` | `$GIT_AUTHOR_NAME` | Filter commits by author |
-| `--since <days>` | `7` | How many days back to look |
-| `--length <size>` | `medium` | Post length: `short` (~100w), `medium` (~250w), `long` (~500w) |
-| `--tone <name>` | — | Built-in tone profile (see `commitpost list-tones`) |
-| `--image-style <name>` | `light_code` | Cover image style (see `commitpost list-image-styles`) |
-| `--include-image` | `false` | Generate cover image PNG |
+| Option                 | Default            | Description                                                    |
+| ---------------------- | ------------------ | -------------------------------------------------------------- |
+| `--author <name>`      | `$GIT_AUTHOR_NAME` | Filter commits by author                                       |
+| `--since <days>`       | `7`                | How many days back to look                                     |
+| `--length <size>`      | `medium`           | Post length: `short` (~100w), `medium` (~250w), `long` (~500w) |
+| `--tone <name>`        | —                  | Built-in tone profile (see `commitpost list-tones`)            |
+| `--image-style <name>` | `light_code`       | Cover image style (see `commitpost list-image-styles`)         |
+| `--include-image`      | `false`            | Generate cover image PNG                                       |
 
 **Examples:**
 
@@ -161,4 +161,3 @@ Issues and PRs welcome: [github.com/vsimke/commitpost](https://github.com/vsimke
 ---
 
 MIT License
-
